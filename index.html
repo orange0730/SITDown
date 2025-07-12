@@ -9,20 +9,12 @@
 <body>
     <!-- 首頁 -->
     <div id="homepage" class="page active">
-        <!-- 標籤遊樂場（全螢幕） -->
-        <div class="tags-playground" id="tags-playground"></div>
-        
-        <!-- 繩子容器 -->
-        <svg class="rope-container" id="rope-container" width="100%" height="100%">
-            <!-- 繩子會動態生成在這裡 -->
-        </svg>
-        
-        <!-- 橫式主要內容 -->
-        <div class="homepage-content">
-            <!-- 左側標題區 -->
-            <div class="left-section">
+        <!-- 三欄式佈局 -->
+        <div class="homepage-layout">
+            <!-- 左側：標題區 -->
+            <div class="left-panel">
                 <h1 class="logo"><span class="sit-text">SIT</span>Down</h1>
-                <p class="subtitle">拖曳標籤到籃子中<br>開始你的影片之旅</p>
+                <p class="subtitle">拖曳標籤餵貓咪<br>開始你的影片之旅</p>
                 <div class="start-section">
                     <button class="start-btn" onclick="startWatching()">開始觀看</button>
                     <p class="skip-text">或者直接開始隨機播放</p>
@@ -30,39 +22,48 @@
                 </div>
             </div>
             
-            <!-- 右側籃子區 -->
-            <div class="right-section">
-                <div class="selection-basket-container">
-                    <div class="basket-title">已選擇</div>
-                    <div class="selection-basket" id="selection-basket">
-                        <div class="basket-icon">🧺</div>
-                        <div class="basket-hint">拖拽標籤到這裡</div>
+            <!-- 中間：貓咪容器 -->
+            <div class="center-panel">
+                <div class="cat-container" id="cat-container">
+                    <div class="cat" id="cat">
+                        <div class="cat-ears">
+                            <div class="ear left"></div>
+                            <div class="ear right"></div>
+                        </div>
+                        <div class="cat-face">
+                            <div class="cat-eyes">
+                                <div class="eye left">●</div>
+                                <div class="eye right">●</div>
+                            </div>
+                            <div class="cat-nose">▼</div>
+                            <div class="cat-mouth" id="cat-mouth">
+                                <div class="mouth-closed">ω</div>
+                                <div class="mouth-open">O</div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="selected-count" id="selected-count">0 個標籤</div>
+                    <!-- 已選擇的標籤會顯示在這裡 -->
+                    <div class="selected-tags-area" id="selected-tags-area">
+                        <div class="selected-count" id="selected-count">餵了 0 個標籤</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 右側：標籤區 -->
+            <div class="right-panel">
+                <div class="tags-section">
+                    <h3 class="tags-title">選擇標籤</h3>
+                    <div class="tags-playground" id="tags-playground"></div>
                 </div>
             </div>
         </div>
         
         <!-- 簡化的提示區域 -->
         <div class="simple-hints">
-            <p>💡 拖曳標籤選擇類型，或直接開始隨機播放</p>
+            <p>💡 拖曳標籤餵貓咪，或直接開始隨機播放</p>
             <div class="manage-links">
                 <a href="import-csv.html" class="hint-link">📥 匯入CSV</a>
                 <a href="manage-videos.html" class="hint-link">⚙️ 管理影片庫</a>
-            </div>
-        </div>
-        
-        <!-- 貓爪拉動區域 -->
-        <div class="cat-paw-container" id="cat-paw-container">
-            <div class="cat-paw" id="cat-paw">
-                <div class="paw-pad">🐾</div>
-                <div class="claw claw-1">🖤</div>
-                <div class="claw claw-2">🖤</div>
-                <div class="claw claw-3">🖤</div>
-            </div>
-            <div class="pull-hint" id="pull-hint">
-                <span class="pull-arrow">⬆️</span>
-                <span class="pull-text">向上拉動開始</span>
             </div>
         </div>
     </div>

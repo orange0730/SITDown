@@ -7,8 +7,8 @@
 
 body {
     font-family: 'Arial', sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
+    background: linear-gradient(135deg, #ffeef8 0%, #e4d1f4 50%, #d4e9f7 100%);
+    color: #4a4a4a;
     overflow-x: hidden;
 }
 
@@ -35,11 +35,217 @@ body {
 
 /* 首頁樣式 - 橫式佈局 */
 #homepage {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #ffeef8 0%, #e4d1f4 50%, #d4e9f7 100%);
     position: relative;
     overflow: hidden;
 }
 
+/* 三欄式佈局 */
+.homepage-layout {
+    display: flex;
+    height: 100vh;
+    align-items: center;
+    padding: 0 40px;
+}
+
+/* 左側面板 */
+.left-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding-right: 40px;
+}
+
+/* 中間面板 - 貓咪容器 */
+.center-panel {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* 右側面板 - 標籤區 */
+.right-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding-left: 40px;
+    height: 80vh;
+}
+
+/* 貓咪容器 */
+.cat-container {
+    position: relative;
+    width: 300px;
+    height: 400px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* 貓咪主體 */
+.cat {
+    position: relative;
+    width: 200px;
+    height: 200px;
+    background: #fff;
+    border-radius: 50% 50% 45% 45%;
+    box-shadow: 0 10px 30px rgba(184, 169, 201, 0.3);
+    transition: all 0.3s ease;
+}
+
+.cat.drag-over {
+    transform: scale(1.1);
+    box-shadow: 0 15px 40px rgba(184, 169, 201, 0.4);
+}
+
+.cat.success {
+    animation: catSuccess 0.6s ease;
+}
+
+@keyframes catSuccess {
+    0% { transform: scale(1); }
+    25% { transform: scale(1.2) rotate(-5deg); }
+    50% { transform: scale(1.1) rotate(5deg); }
+    75% { transform: scale(1.15) rotate(-3deg); }
+    100% { transform: scale(1); }
+}
+
+/* 貓耳朵 */
+.cat-ears {
+    position: absolute;
+    top: -40px;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    padding: 0 20px;
+}
+
+.ear {
+    width: 0;
+    height: 0;
+    border-left: 30px solid transparent;
+    border-right: 30px solid transparent;
+    border-bottom: 60px solid #fff;
+    position: relative;
+}
+
+.ear::after {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 0;
+    border-left: 15px solid transparent;
+    border-right: 15px solid transparent;
+    border-bottom: 30px solid #ffb3d9;
+    top: 20px;
+    left: -15px;
+}
+
+/* 貓臉 */
+.cat-face {
+    padding-top: 50px;
+    text-align: center;
+}
+
+/* 貓眼睛 */
+.cat-eyes {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    margin-bottom: 10px;
+}
+
+.eye {
+    font-size: 1.5rem;
+    color: #333;
+}
+
+/* 貓鼻子 */
+.cat-nose {
+    font-size: 0.8rem;
+    color: #ff8fab;
+    margin-bottom: 5px;
+}
+
+/* 貓嘴巴 */
+.cat-mouth {
+    position: relative;
+    height: 30px;
+}
+
+.mouth-closed,
+.mouth-open {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 1.5rem;
+    color: #ff8fab;
+    transition: opacity 0.2s ease;
+}
+
+.mouth-open {
+    font-size: 2rem;
+    opacity: 0;
+}
+
+.cat.mouth-open .mouth-closed {
+    opacity: 0;
+}
+
+.cat.mouth-open .mouth-open {
+    opacity: 1;
+}
+
+/* 已選擇標籤區域 */
+.selected-tags-area {
+    margin-top: 30px;
+    width: 100%;
+    min-height: 100px;
+    text-align: center;
+}
+
+.selected-tags-area .draggable-tag {
+    position: relative !important;
+    display: inline-block;
+    margin: 5px;
+    cursor: default;
+    animation: fadeIn 0.3s ease;
+}
+
+/* 標籤區域 */
+.tags-section {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.tags-title {
+    font-size: 1.3rem;
+    color: #6b5b95;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.tags-playground {
+    flex: 1;
+    position: relative;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 20px;
+    padding: 20px;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.tags-playground .draggable-tag {
+    position: relative !important;
+    display: inline-block;
+    margin: 8px;
+}
+
+/* 更新原有的樣式 */
 .homepage-content {
     position: absolute;
     top: 0;
@@ -48,7 +254,7 @@ body {
     height: 100%;
     display: flex;
     z-index: 10;
-    pointer-events: none;  /* 讓背景不接收事件，標籤可以被點擊 */
+    pointer-events: none;
 }
 
 /* 左側標題區 */
@@ -61,7 +267,7 @@ body {
     max-width: 50%;
     pointer-events: all;
     position: relative;
-    z-index: 20;  /* 確保在標籤之上 */
+    z-index: 20;
 }
 
 .right-section {
@@ -72,15 +278,15 @@ body {
     padding: 60px;
     pointer-events: all;
     position: relative;
-    z-index: 20;  /* 確保在標籤之上 */
+    z-index: 20;
 }
 
 .logo {
     font-size: 4rem;
     font-weight: bold;
     margin-bottom: 20px;
-    color: white;
-    text-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    color: #6b5b95;
+    text-shadow: 0 2px 10px rgba(107, 91, 149, 0.2);
     position: relative;
     display: inline-block;
 }
@@ -93,7 +299,7 @@ body {
     left: -20px;
     right: -20px;
     bottom: -20px;
-    border: 2px dashed rgba(78, 205, 196, 0.3);
+    border: 2px dashed rgba(184, 169, 201, 0.3);
     border-radius: 10px;
     opacity: 0;
     transition: opacity 0.3s ease;
@@ -117,7 +323,7 @@ body {
 }
 
 .sit-text {
-    background: linear-gradient(45deg, #4ecdc4, #45b7aa);
+    background: linear-gradient(45deg, #88b3cc, #b8a9c9);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -126,28 +332,20 @@ body {
 .subtitle {
     font-size: 1.3rem;
     margin-bottom: 40px;
-    opacity: 0.9;
+    opacity: 0.8;
     text-align: left;
     line-height: 1.4;
+    color: #7a7a7a;
 }
 
-/* 標籤遊樂場 - 全螢幕 */
-.tags-playground {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 5;  /* 降低到比 homepage-content 更低 */
-    pointer-events: all; /* 允許接收事件 */
-}
+
 
 /* 可拖曳標籤 */
 .draggable-tag {
     position: absolute;  /* 改為 absolute，因為父容器已經是固定位置 */
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.7);
     backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    border: 1px solid rgba(184, 169, 201, 0.3);
     border-radius: 25px;
     padding: 10px 18px;
     cursor: grab;
@@ -163,6 +361,8 @@ body {
     -webkit-user-drag: none;  /* 防止瀏覽器預設拖曳行為 */
     -webkit-touch-callout: none;  /* 防止觸控時的預設行為 */
     pointer-events: all !important; /* 確保標籤可以接收事件 */
+    color: #6b5b95;
+    box-shadow: 0 4px 15px rgba(184, 169, 201, 0.15);
 }
 
 @keyframes tagAppear {
@@ -173,9 +373,9 @@ body {
 }
 
 .draggable-tag:hover {
-    background: rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.85);
     transform: scale(1.05);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 6px 20px rgba(184, 169, 201, 0.25);
 }
 
 .draggable-tag.dragging {
@@ -187,21 +387,21 @@ body {
 }
 
 .draggable-tag.selected {
-    background: rgba(255, 107, 107, 0.8);
-    border-color: #ff6b6b;
+    background: rgba(244, 164, 172, 0.8);
+    border-color: #f4a4ac;
     cursor: pointer;
 }
 
 .draggable-tag.selected:hover {
-    background: rgba(255, 107, 107, 0.9);
+    background: rgba(244, 164, 172, 0.9);
     transform: scale(1.02);
 }
 
 /* 標籤反彈效果 */
 .draggable-tag.bouncing {
     animation: bounce 0.3s ease-out;
-    background: rgba(255, 107, 107, 0.3) !important;
-    border-color: #ff6b6b !important;
+    background: rgba(244, 164, 172, 0.4) !important;
+    border-color: #f4a4ac !important;
     transform: scale(1.1);
 }
 
@@ -217,88 +417,14 @@ body {
     }
 }
 
-/* 選擇籃子容器 */
-.selection-basket-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-}
 
-.basket-title {
-    font-size: 1.3rem;
-    font-weight: bold;
-    margin-bottom: 20px;
-    color: rgba(255, 255, 255, 0.9);
-}
-
-.selection-basket {
-    width: 200px;
-    height: 200px;
-    background: rgba(255, 255, 255, 0.1);
-    border: 3px dashed rgba(255, 255, 255, 0.3);
-    border-radius: 50%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.3s ease;
-    backdrop-filter: blur(10px);
-    position: relative;
-}
-
-.selection-basket.drag-over {
-    border-color: #4ecdc4;
-    background: rgba(78, 205, 196, 0.2);
-    transform: scale(1.1);
-    box-shadow: 0 0 30px rgba(78, 205, 196, 0.4);
-}
-
-.selection-basket.success {
-    animation: basketSuccess 0.6s ease;
-}
-
-@keyframes basketSuccess {
-    0% { transform: scale(1); }
-    25% { transform: scale(1.2); border-color: #4ecdc4; }
-    50% { transform: scale(1.1); box-shadow: 0 0 40px rgba(78, 205, 196, 0.6); }
-    100% { transform: scale(1); }
-}
-
-.basket-icon {
-    font-size: 3rem;
-    margin-bottom: 8px;
-    transition: transform 0.3s ease;
-}
-
-.selection-basket.drag-over .basket-icon {
-    transform: scale(1.2) rotate(5deg);
-}
-
-.selection-basket.success .basket-icon {
-    animation: basketIconBounce 0.6s ease;
-}
-
-@keyframes basketIconBounce {
-    0%, 100% { transform: scale(1) rotate(0deg); }
-    25% { transform: scale(1.3) rotate(-10deg); }
-    50% { transform: scale(1.1) rotate(5deg); }
-    75% { transform: scale(1.2) rotate(-3deg); }
-}
-
-.basket-hint {
-    font-size: 0.8rem;
-    text-align: center;
-    opacity: 0.7;
-    line-height: 1.2;
-}
 
 .selected-count {
     margin-top: 15px;
     font-size: 0.9rem;
     opacity: 0.8;
     transition: all 0.3s ease;
+    color: #6b5b95;
 }
 
 .selected-count.updated {
@@ -307,37 +433,8 @@ body {
 
 @keyframes countPulse {
     0% { transform: scale(1); }
-    50% { transform: scale(1.2); color: #4ecdc4; }
+    50% { transform: scale(1.2); color: #88b3cc; }
     100% { transform: scale(1); }
-}
-
-/* 繩子容器 */
-.rope-container {
-    position: fixed;
-    top: 0;
-    left: 0;
-    pointer-events: none;
-    z-index: 15;  /* 降低到標籤和按鈕之間的合理值 */
-}
-
-.rope-line {
-    stroke: #ff6b6b;
-    stroke-width: 2;
-    fill: none;
-    stroke-dasharray: 5,3;
-    opacity: 0;
-    animation: ropeDash 2s linear infinite;
-    transition: opacity 0.3s ease;
-}
-
-@keyframes ropeDash {
-    0% { stroke-dashoffset: 0; }
-    100% { stroke-dashoffset: 16; }
-}
-
-@keyframes bounceUp {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-10px); }
 }
 
 
@@ -348,116 +445,10 @@ body {
     text-align: left;
 }
 
-/* 貓爪拉動效果 */
-.cat-paw-container {
-    position: absolute;
-    bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 22;  /* 介於按鈕(20)和提示區域(25)之間 */
-    transition: transform 0.3s ease;
-}
 
-.cat-paw-container::before {
-    content: '拖曳我進入影片';
-    position: absolute;
-    bottom: 140px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(0, 0, 0, 0.8);
-    color: white;
-    padding: 8px 16px;
-    border-radius: 20px;
-    font-size: 0.8rem;
-    white-space: nowrap;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-    pointer-events: none;
-}
-
-.cat-paw-container:hover::before {
-    opacity: 1;
-}
-
-.cat-paw {
-    position: relative;
-    width: 80px;
-    height: 120px;
-    transform: translateY(80px); /* 初始隱藏大部分 */
-    transition: transform 0.3s ease;
-    cursor: grab;
-    user-select: none;
-}
-
-.cat-paw:hover {
-    transform: translateY(70px); /* hover 時露出更多 */
-}
-
-.cat-paw:active {
-    cursor: grabbing;
-}
-
-.paw-pad {
-    position: absolute;
-    bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 3rem;
-    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
-}
-
-.claw {
-    position: absolute;
-    font-size: 1rem;
-    color: #2c2c2c;
-    transition: all 0.3s ease;
-}
-
-.claw-1 {
-    top: 10px;
-    left: 20px;
-    transform: rotate(-15deg);
-}
-
-.claw-2 {
-    top: 5px;
-    left: 50%;
-    transform: translateX(-50%) rotate(0deg);
-}
-
-.claw-3 {
-    top: 10px;
-    right: 20px;
-    transform: rotate(15deg);
-}
-
-.pull-hint {
-    position: absolute;
-    bottom: 120px;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 5px;
-    opacity: 0.8;
-    transition: all 0.3s ease;
-    pointer-events: none;
-}
-
-.pull-arrow {
-    font-size: 1.5rem;
-    animation: bounceUp 2s ease-in-out infinite;
-}
-
-.pull-text {
-    font-size: 0.9rem;
-    color: rgba(255, 255, 255, 0.9);
-    font-weight: 500;
-}
 
 .start-btn {
-    background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+    background: linear-gradient(45deg, #f4a4ac, #88b3cc);
     border: none;
     color: white;
     font-size: 1.3rem;
@@ -466,13 +457,13 @@ body {
     cursor: pointer;
     transition: all 0.3s ease;
     font-weight: bold;
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 6px 20px rgba(184, 169, 201, 0.25);
 }
 
 .start-btn:hover {
-    background: #3cbab2;
+    background: linear-gradient(45deg, #f8b5bd, #9bc1d4);
     transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(78, 205, 196, 0.3);
+    box-shadow: 0 8px 25px rgba(184, 169, 201, 0.35);
 }
 
 /* 清除資料按鈕樣式 */
@@ -480,26 +471,27 @@ body {
     display: block;
     margin: 15px auto 0;
     padding: 10px 20px;
-    background: #ff6b6b;
+    background: #f4a4ac;
     color: white;
     border: none;
     border-radius: 25px;
     font-size: 14px;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(255, 107, 107, 0.2);
+    box-shadow: 0 4px 15px rgba(244, 164, 172, 0.25);
 }
 
 .clear-data-btn:hover {
-    background: #ff5252;
+    background: #f8b5bd;
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(255, 107, 107, 0.3);
+    box-shadow: 0 6px 20px rgba(244, 164, 172, 0.35);
 }
 
 .skip-text {
     margin-top: 20px;
     font-size: 0.9rem;
     opacity: 0.7;
+    color: #7a7a7a;
 }
 
 /* 影片播放頁面 - 橫式佈局 */
@@ -788,7 +780,7 @@ body {
     left: 50%;
     transform: translateX(-50%);
     text-align: center;
-    background: rgba(0, 0, 0, 0.3);
+    background: rgba(255, 255, 255, 0.3);
     padding: 15px 30px;
     border-radius: 30px;
     backdrop-filter: blur(10px);
@@ -796,13 +788,13 @@ body {
 }
 
 .simple-hints p {
-    background: rgba(78, 205, 196, 0.1);
+    background: rgba(184, 169, 201, 0.1);
     backdrop-filter: blur(10px);
-    border: 1px solid rgba(78, 205, 196, 0.3);
+    border: 1px solid rgba(184, 169, 201, 0.3);
     border-radius: 30px;
     padding: 15px 30px;
     font-size: 16px;
-    color: rgba(255, 255, 255, 0.9);
+    color: #6b5b95;
     margin: 0;
     display: inline-block;
 }
@@ -816,18 +808,18 @@ body {
 }
 
 .hint-link {
-    color: #4ecdc4;
+    color: #88b3cc;
     text-decoration: none;
     font-size: 14px;
     padding: 5px 10px;
-    border: 1px solid rgba(78, 205, 196, 0.3);
+    border: 1px solid rgba(136, 179, 204, 0.3);
     border-radius: 15px;
     transition: all 0.3s ease;
 }
 
 .hint-link:hover {
-    background: rgba(78, 205, 196, 0.1);
-    border-color: rgba(78, 205, 196, 0.5);
+    background: rgba(136, 179, 204, 0.15);
+    border-color: rgba(136, 179, 204, 0.5);
     transform: translateY(-2px);
 }
 
@@ -900,21 +892,44 @@ body {
 
 /* 響應式設計 */
 @media (max-width: 768px) {
-    /* 首頁橫式佈局調整 */
-    .homepage-content {
+    /* 三欄式佈局調整為垂直排列 */
+    .homepage-layout {
         flex-direction: column;
-    }
-    
-    .left-section {
-        max-width: 100%;
-        padding: 30px 20px;
-        text-align: center;
-        z-index: 20;  /* 確保在手機版也保持正確的層級 */
-    }
-    
-    .right-section {
         padding: 20px;
-        z-index: 20;  /* 確保在手機版也保持正確的層級 */
+    }
+    
+    .left-panel, .center-panel, .right-panel {
+        width: 100%;
+        padding: 20px 0;
+    }
+    
+    .left-panel {
+        text-align: center;
+        padding-right: 0;
+    }
+    
+    .center-panel {
+        order: 2;
+    }
+    
+    .right-panel {
+        order: 1;
+        height: 200px;
+        padding-left: 0;
+    }
+    
+    .cat-container {
+        width: 200px;
+        height: 300px;
+    }
+    
+    .cat {
+        width: 150px;
+        height: 150px;
+    }
+    
+    .tags-playground {
+        height: 100%;
     }
     
     .logo {

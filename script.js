@@ -462,7 +462,6 @@ function getAllTags() {
 
 // 拖拽相關變數
 let draggedTag = null;
-let ropes = [];
 
 // 初始化可拖曳標籤
 function initDraggableTags() {
@@ -486,7 +485,7 @@ function initDraggableTags() {
         createDraggableTag(tag, index, tagsPlayground);
     });
     
-    initBasketEvents();
+    initCatEvents();
     console.log('標籤初始化完成');
 }
 
@@ -499,30 +498,11 @@ function createDraggableTag(tagName, index, container) {
     tagElement.textContent = tagName;
     tagElement.setAttribute('data-tag', tagName);
     
-    // 設置初始位置（避免全部在 0,0 和避開左上角標題區域）
-    // 從右側或下方開始分布
-    const initialX = 450 + (index * 60) % 400;  // 從 x=450 開始，避開標題
-    const initialY = 100 + (index * 40) % 300;  // 稍微往下一點
-    tagElement.style.left = initialX + 'px';
-    tagElement.style.top = initialY + 'px';
-    
-    // 延遲動畫，讓標籤依序出現
-    tagElement.style.animationDelay = (index * 0.1) + 's';
-    
     // 添加拖拽事件
     addDragEvents(tagElement, tagName);
     
     container.appendChild(tagElement);
     console.log(`標籤 ${tagName} 已添加到容器`);
-    
-    // 延遲設置隨機位置
-    setTimeout(() => {
-        setRandomPosition(tagElement, container);
-        // 開始隨意飄動
-        setTimeout(() => {
-            startFloatingAnimation(tagElement, container);
-        }, 2000);
-    }, (index * 100) + 500);
 }
 
 // 設置隨機位置 - 整個畫面範圍（但避開左上角標題區域）
@@ -776,8 +756,8 @@ function addDragEvents(tagElement, tagName) {
         draggedTag.style.left = newX + 'px';
         draggedTag.style.top = newY + 'px';
         
-        // 檢查是否在籃子上方
-        checkBasketHover(touch);
+        // 檢查是否在貓咪上方
+        checkCatHover(touch);
     }
     
     function dragEnd(e) {
@@ -793,20 +773,13 @@ function addDragEvents(tagElement, tagName) {
         // 獲取結束位置
         const touch = e.changedTouches ? e.changedTouches[0] : e;
         
-        // 檢查是否放在籃子中
-        if (isOverBasket(touch)) {
+        // 檢查是否放在貓咪上
+        if (isOverCat(touch)) {
             selectTag(tagName, draggedTag);
-        } else {
-            // 恢復飄動動畫
-            draggedTag.style.transition = 'all 0.3s ease';
-            const container = document.getElementById('tags-playground');
-            setTimeout(() => {
-                startFloatingAnimation(draggedTag, container);
-            }, 500);
         }
         
         draggedTag = null;
-        removeBasketHover();
+        removeCatHover();
         
         // 移除所有事件監聽器
         document.removeEventListener('mousemove', dragMove);
@@ -822,52 +795,9 @@ function addDragEvents(tagElement, tagName) {
     tagElement.addEventListener('touchstart', startDrag, { passive: false });
 }
 
-// 初始化籃子事件
-function initBasketEvents() {
-    const basket = document.getElementById('selection-basket');
-    
-    basket.addEventListener('dragover', function(e) {
-        e.preventDefault();
-    });
-    
-    basket.addEventListener('drop', function(e) {
-        e.preventDefault();
-    });
-}
 
-// 檢查滑鼠/觸控是否在籃子上方
-function checkBasketHover(touch) {
-    const basket = document.getElementById('selection-basket');
-    const basketRect = basket.getBoundingClientRect();
-    
-    const clientX = touch.clientX;
-    const clientY = touch.clientY;
-    
-    if (clientX >= basketRect.left && clientX <= basketRect.right &&
-        clientY >= basketRect.top && clientY <= basketRect.bottom) {
-        basket.classList.add('drag-over');
-    } else {
-        basket.classList.remove('drag-over');
-    }
-}
 
-// 檢查是否放在籃子中
-function isOverBasket(touch) {
-    const basket = document.getElementById('selection-basket');
-    const basketRect = basket.getBoundingClientRect();
-    
-    const clientX = touch.clientX;
-    const clientY = touch.clientY;
-    
-    return clientX >= basketRect.left && clientX <= basketRect.right &&
-           clientY >= basketRect.top && clientY <= basketRect.bottom;
-}
 
-// 移除籃子懸停效果
-function removeBasketHover() {
-    const basket = document.getElementById('selection-basket');
-    basket.classList.remove('drag-over');
-}
 
 // 選中標籤
 function selectTag(tagName, tagElement) {
@@ -876,18 +806,15 @@ function selectTag(tagName, tagElement) {
     selectedTags.push(tagName);
     tagElement.classList.add('selected');
     
-    // 觸發籃子成功動畫
-    const basket = document.getElementById('selection-basket');
-    basket.classList.add('success');
+    // 觸發貓咪成功動畫
+    const cat = document.getElementById('cat');
+    cat.classList.add('success');
     setTimeout(() => {
-        basket.classList.remove('success');
+        cat.classList.remove('success');
     }, 600);
     
-    // 移動標籤到籃子附近
-    moveTagToBasket(tagElement);
-    
-    // 創建繩子連接
-    createRope(tagElement);
+    // 移動標籤到貓咪下方
+    moveTagToCat(tagElement);
     
     // 更新計數
     updateSelectedCount();
@@ -898,95 +825,19 @@ function unselectTag(tagName, tagElement) {
     selectedTags = selectedTags.filter(tag => tag !== tagName);
     tagElement.classList.remove('selected');
     
-    // 移除繩子
-    removeRope(tagElement);
-    
-    // 標籤回到自由位置
-    moveTagToFreedom(tagElement);
+    // 標籤回到標籤區
+    moveTagToPlayground(tagElement);
     
     // 更新計數
     updateSelectedCount();
 }
 
-// 移動標籤到籃子附近 - 使用絕對座標
-function moveTagToBasket(tagElement) {
-    const basket = document.getElementById('selection-basket');
-    
-    // 如果籃子不可見（例如在影片頁面），使用固定位置
-    if (!basket || basket.offsetParent === null) {
-        // 移動到右上角區域
-        const targetX = window.innerWidth - 200;
-        const targetY = 100;
-        
-        tagElement.style.transition = 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
-        tagElement.style.left = targetX + 'px';
-        tagElement.style.top = targetY + 'px';
-        
-        setTimeout(() => {
-            tagElement.style.transition = 'all 0.3s ease';
-        }, 600);
-        return;
-    }
-    
-    const basketRect = basket.getBoundingClientRect();
-    
-    // 直接使用籃子的絕對位置
-    let basketCenterX = basketRect.left + basketRect.width / 2;
-    let basketCenterY = basketRect.top + basketRect.height / 2;
-    
-    // 在手機版本上調整位置
-    if (window.innerWidth <= 768) {
-        // 手機版本可能需要不同的聚集位置
-        basketCenterY = Math.min(basketCenterY, window.innerHeight * 0.3);
-    }
-    
-    // 隨機角度放置在籃子周圍
-    const angle = Math.random() * Math.PI * 2;
-    const distance = 80 + Math.random() * 40;
-    
-    const targetX = Math.max(10, Math.min(window.innerWidth - 110, 
-        basketCenterX + Math.cos(angle) * distance - 50));
-    const targetY = Math.max(10, Math.min(window.innerHeight - 50, 
-        basketCenterY + Math.sin(angle) * distance - 20));
-    
-    // 平滑移動
-    tagElement.style.transition = 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
-    tagElement.style.left = targetX + 'px';
-    tagElement.style.top = targetY + 'px';
-    
-    // 移動完成後重置 transition
-    setTimeout(() => {
-        tagElement.style.transition = 'all 0.3s ease';
-    }, 600);
-}
 
-// 移動標籤到自由位置 - 整個畫面範圍
-function moveTagToFreedom(tagElement) {
-    const playground = document.getElementById('tags-playground');
-    const windowWidth = window.innerWidth;
-    const windowHeight = window.innerHeight;
-    
-    // 隨機自由位置
-    const maxX = Math.max(50, windowWidth - 120);
-    const maxY = Math.max(50, windowHeight - 40);
-    const randomX = Math.random() * maxX;
-    const randomY = Math.random() * maxY;
-    
-    tagElement.style.transition = 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
-    tagElement.style.left = randomX + 'px';
-    tagElement.style.top = randomY + 'px';
-    
-    setTimeout(() => {
-        tagElement.style.transition = 'all 0.3s ease';
-        // 重新開始飄動動畫
-        startFloatingAnimation(tagElement, playground);
-    }, 600);
-}
 
 // 更新選中計數
 function updateSelectedCount() {
     const countElement = document.getElementById('selected-count');
-    countElement.textContent = `${selectedTags.length} 個標籤`;
+    countElement.textContent = `餵了 ${selectedTags.length} 個標籤`;
     countElement.classList.add('updated');
     
     setTimeout(() => {
@@ -994,93 +845,7 @@ function updateSelectedCount() {
     }, 400);
 }
 
-// 創建繩子連接
-function createRope(tagElement) {
-    const svg = document.getElementById('rope-container');
-    const basket = document.getElementById('selection-basket');
-    
-    // 創建繩子線條
-    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-    line.classList.add('rope-line');
-    line.setAttribute('data-tag', tagElement.getAttribute('data-tag'));
-    
-    // 存儲繩子信息
-    const rope = {
-        element: line,
-        tagElement: tagElement,
-        update: function() {
-            updateRopePosition(line, tagElement, basket);
-        }
-    };
-    
-    ropes.push(rope);
-    svg.appendChild(line);
-    
-    // 初始更新位置
-    rope.update();
-    
-    // 添加動畫出現效果
-    setTimeout(() => {
-        line.style.opacity = '0.8';
-    }, 100);
-}
 
-// 移除繩子
-function removeRope(tagElement) {
-    const tagName = tagElement.getAttribute('data-tag');
-    const ropeIndex = ropes.findIndex(rope => 
-        rope.tagElement.getAttribute('data-tag') === tagName
-    );
-    
-    if (ropeIndex !== -1) {
-        const rope = ropes[ropeIndex];
-        
-        // 添加斷開動畫
-        rope.element.style.transition = 'opacity 0.3s ease';
-        rope.element.style.opacity = '0';
-        
-        setTimeout(() => {
-            if (rope.element.parentNode) {
-                rope.element.parentNode.removeChild(rope.element);
-            }
-        }, 300);
-        
-        ropes.splice(ropeIndex, 1);
-    }
-}
-
-// 更新繩子位置 - 使用絕對座標
-function updateRopePosition(line, tagElement, basket) {
-    const tagRect = tagElement.getBoundingClientRect();
-    const basketRect = basket.getBoundingClientRect();
-    
-    // 計算標籤中心點（絕對位置）
-    const tagCenterX = tagRect.left + tagRect.width / 2;
-    const tagCenterY = tagRect.top + tagRect.height / 2;
-    
-    // 計算籃子中心點（絕對位置）
-    const basketCenterX = basketRect.left + basketRect.width / 2;
-    const basketCenterY = basketRect.top + basketRect.height / 2;
-    
-    // 設置繩子起點和終點
-    line.setAttribute('x1', tagCenterX);
-    line.setAttribute('y1', tagCenterY);
-    line.setAttribute('x2', basketCenterX);
-    line.setAttribute('y2', basketCenterY);
-}
-
-// 更新所有繩子位置（用於窗口調整大小等情況）
-function updateAllRopes() {
-    ropes.forEach(rope => {
-        rope.update();
-    });
-}
-
-// 監聽窗口調整大小，更新繩子位置
-window.addEventListener('resize', updateAllRopes);
-
-// 定期更新繩子位置（因為標籤可能在動畫中移動）
-setInterval(updateAllRopes, 100);
 
 // 過濾影片
 function filterVideos() {
@@ -1593,7 +1358,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     setTimeout(() => {
         const subtitle = document.querySelector('.subtitle');
         if (subtitle) {
-            subtitle.innerHTML = '拖曳標籤到籃子中，或直接開始隨機播放<br><small>💡 提示：按向下鍵或拖曳貓爪開始觀看</small>';
+            subtitle.innerHTML = '拖曳標籤餵貓咪<br>開始你的影片之旅<br><small>💡 提示：按向下鍵開始觀看</small>';
         }
     }, 1000);
     
@@ -1820,3 +1585,96 @@ function clearImportedData() {
         }
     }
 } 
+
+// 初始化貓咪事件
+function initCatEvents() {
+    const cat = document.getElementById('cat');
+    const catContainer = document.getElementById('cat-container');
+    
+    if (!catContainer || !cat) {
+        console.error('找不到貓咪容器元素');
+        return;
+    }
+    
+    catContainer.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        cat.classList.add('drag-over', 'mouth-open');
+    });
+    
+    catContainer.addEventListener('dragleave', (e) => {
+        // 確保是真的離開了貓咪區域
+        const rect = catContainer.getBoundingClientRect();
+        const x = e.clientX;
+        const y = e.clientY;
+        
+        if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
+            cat.classList.remove('drag-over', 'mouth-open');
+        }
+    });
+    
+    catContainer.addEventListener('drop', (e) => {
+        e.preventDefault();
+        cat.classList.remove('drag-over', 'mouth-open');
+    });
+} 
+
+// 檢查滑鼠/觸控是否在貓咪上方
+function checkCatHover(touch) {
+    const cat = document.getElementById('cat');
+    const catContainer = document.getElementById('cat-container');
+    const catRect = catContainer.getBoundingClientRect();
+    
+    const clientX = touch.clientX;
+    const clientY = touch.clientY;
+    
+    if (clientX >= catRect.left && clientX <= catRect.right &&
+        clientY >= catRect.top && clientY <= catRect.bottom) {
+        cat.classList.add('drag-over', 'mouth-open');
+    } else {
+        cat.classList.remove('drag-over', 'mouth-open');
+    }
+}
+
+// 檢查是否放在貓咪上
+function isOverCat(touch) {
+    const catContainer = document.getElementById('cat-container');
+    const catRect = catContainer.getBoundingClientRect();
+    
+    const clientX = touch.clientX;
+    const clientY = touch.clientY;
+    
+    return clientX >= catRect.left && clientX <= catRect.right &&
+           clientY >= catRect.top && clientY <= catRect.bottom;
+}
+
+// 移除貓咪懸停效果
+function removeCatHover() {
+    const cat = document.getElementById('cat');
+    cat.classList.remove('drag-over', 'mouth-open');
+}
+
+// 移動標籤到貓咪下方
+function moveTagToCat(tagElement) {
+    const selectedArea = document.getElementById('selected-tags-area');
+    
+    // 從原本的容器移除
+    if (tagElement.parentNode) {
+        tagElement.parentNode.removeChild(tagElement);
+    }
+    
+    // 添加到已選擇區域
+    selectedArea.appendChild(tagElement);
+}
+
+// 移動標籤回標籤區
+function moveTagToPlayground(tagElement) {
+    const playground = document.getElementById('tags-playground');
+    
+    // 從已選擇區域移除
+    if (tagElement.parentNode) {
+        tagElement.parentNode.removeChild(tagElement);
+    }
+    
+    // 添加回標籤區
+    playground.appendChild(tagElement);
+}
