@@ -85,23 +85,28 @@ body {
     align-items: center;
 }
 
-/* 貓咪主體 */
-.cat {
+/* 貓咪圖片包裝器 */
+.cat-image-wrapper {
     position: relative;
-    width: 200px;
-    height: 200px;
-    background: #fff;
-    border-radius: 50% 50% 45% 45%;
-    box-shadow: 0 10px 30px rgba(184, 169, 201, 0.3);
+    width: 250px;
+    height: 250px;
     transition: all 0.3s ease;
 }
 
-.cat.drag-over {
-    transform: scale(1.1);
-    box-shadow: 0 15px 40px rgba(184, 169, 201, 0.4);
+.cat-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    filter: drop-shadow(0 10px 30px rgba(184, 169, 201, 0.3));
+    transition: all 0.3s ease;
 }
 
-.cat.success {
+.cat-image-wrapper.drag-over .cat-img {
+    transform: scale(1.1);
+    filter: drop-shadow(0 15px 40px rgba(184, 169, 201, 0.4));
+}
+
+.cat-image-wrapper.success {
     animation: catSuccess 0.6s ease;
 }
 
@@ -111,92 +116,6 @@ body {
     50% { transform: scale(1.1) rotate(5deg); }
     75% { transform: scale(1.15) rotate(-3deg); }
     100% { transform: scale(1); }
-}
-
-/* 貓耳朵 */
-.cat-ears {
-    position: absolute;
-    top: -40px;
-    width: 100%;
-    display: flex;
-    justify-content: space-between;
-    padding: 0 20px;
-}
-
-.ear {
-    width: 0;
-    height: 0;
-    border-left: 30px solid transparent;
-    border-right: 30px solid transparent;
-    border-bottom: 60px solid #fff;
-    position: relative;
-}
-
-.ear::after {
-    content: '';
-    position: absolute;
-    width: 0;
-    height: 0;
-    border-left: 15px solid transparent;
-    border-right: 15px solid transparent;
-    border-bottom: 30px solid #ffb3d9;
-    top: 20px;
-    left: -15px;
-}
-
-/* 貓臉 */
-.cat-face {
-    padding-top: 50px;
-    text-align: center;
-}
-
-/* 貓眼睛 */
-.cat-eyes {
-    display: flex;
-    justify-content: center;
-    gap: 40px;
-    margin-bottom: 10px;
-}
-
-.eye {
-    font-size: 1.5rem;
-    color: #333;
-}
-
-/* 貓鼻子 */
-.cat-nose {
-    font-size: 0.8rem;
-    color: #ff8fab;
-    margin-bottom: 5px;
-}
-
-/* 貓嘴巴 */
-.cat-mouth {
-    position: relative;
-    height: 30px;
-}
-
-.mouth-closed,
-.mouth-open {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 1.5rem;
-    color: #ff8fab;
-    transition: opacity 0.2s ease;
-}
-
-.mouth-open {
-    font-size: 2rem;
-    opacity: 0;
-}
-
-.cat.mouth-open .mouth-closed {
-    opacity: 0;
-}
-
-.cat.mouth-open .mouth-open {
-    opacity: 1;
 }
 
 /* 已選擇標籤區域 */
@@ -923,7 +842,7 @@ body {
         height: 300px;
     }
     
-    .cat {
+    .cat-image-wrapper {
         width: 150px;
         height: 150px;
     }

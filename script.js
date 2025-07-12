@@ -1589,16 +1589,18 @@ function clearImportedData() {
 // 初始化貓咪事件
 function initCatEvents() {
     const cat = document.getElementById('cat');
+    const catImg = document.getElementById('cat-img');
     const catContainer = document.getElementById('cat-container');
     
-    if (!catContainer || !cat) {
+    if (!catContainer || !cat || !catImg) {
         console.error('找不到貓咪容器元素');
         return;
     }
     
     catContainer.addEventListener('dragover', (e) => {
         e.preventDefault();
-        cat.classList.add('drag-over', 'mouth-open');
+        cat.classList.add('drag-over');
+        catImg.src = 'cat2_open.png';  // 切換到張嘴圖片
     });
     
     catContainer.addEventListener('dragleave', (e) => {
@@ -1608,19 +1610,22 @@ function initCatEvents() {
         const y = e.clientY;
         
         if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
-            cat.classList.remove('drag-over', 'mouth-open');
+            cat.classList.remove('drag-over');
+            catImg.src = 'cat1_close.png';  // 切換回閉嘴圖片
         }
     });
     
     catContainer.addEventListener('drop', (e) => {
         e.preventDefault();
-        cat.classList.remove('drag-over', 'mouth-open');
+        cat.classList.remove('drag-over');
+        catImg.src = 'cat1_close.png';  // 切換回閉嘴圖片
     });
 } 
 
 // 檢查滑鼠/觸控是否在貓咪上方
 function checkCatHover(touch) {
     const cat = document.getElementById('cat');
+    const catImg = document.getElementById('cat-img');
     const catContainer = document.getElementById('cat-container');
     const catRect = catContainer.getBoundingClientRect();
     
@@ -1629,9 +1634,11 @@ function checkCatHover(touch) {
     
     if (clientX >= catRect.left && clientX <= catRect.right &&
         clientY >= catRect.top && clientY <= catRect.bottom) {
-        cat.classList.add('drag-over', 'mouth-open');
+        cat.classList.add('drag-over');
+        catImg.src = 'cat2_open.png';  // 切換到張嘴圖片
     } else {
-        cat.classList.remove('drag-over', 'mouth-open');
+        cat.classList.remove('drag-over');
+        catImg.src = 'cat1_close.png';  // 切換回閉嘴圖片
     }
 }
 
@@ -1650,7 +1657,9 @@ function isOverCat(touch) {
 // 移除貓咪懸停效果
 function removeCatHover() {
     const cat = document.getElementById('cat');
-    cat.classList.remove('drag-over', 'mouth-open');
+    const catImg = document.getElementById('cat-img');
+    cat.classList.remove('drag-over');
+    catImg.src = 'cat1_close.png';  // 切換回閉嘴圖片
 }
 
 // 移動標籤到貓咪下方
