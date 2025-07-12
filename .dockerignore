@@ -1,0 +1,45 @@
+# Git
+.git
+.gitignore
+
+# Node.js
+node_modules
+npm-debug.log
+yarn-error.log
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+.venv
+venv
+ENV
+env
+
+# 測試檔案
+test*.html
+debug*.html
+*-test.html
+*-demo.html
+
+# 文件
+*.md
+docs/
+
+# 編輯器
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# 其他
+*.log
+*.zip
+.env
+.env.local 

@@ -1,0 +1,22 @@
+FROM node:18-alpine
+
+WORKDIR /app
+
+# 複製 package.json 和 package-lock.json
+COPY backend/package*.json ./
+
+# 安裝依賴
+RUN npm ci --only=production
+
+# 複製應用程式碼
+COPY backend/ ./
+
+# 建立資料庫目錄
+RUN mkdir -p /app/data
+
+# 初始化資料庫
+RUN node init-db.js
+
+EXPOSE 8080
+
+CMD ["node", "server.js"] 
