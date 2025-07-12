@@ -1,0 +1,30 @@
+[
+  {
+    "id": 1,
+    "title": "搞笑瞬間",
+    "url": "https://www.youtube.com/embed/qAY2EX6Kil0",
+    "tags": ["娛樂搞笑"],
+    "type": "youtube"
+  },
+  {
+    "id": 2,
+    "title": "遊戲精彩時刻",
+    "url": "https://www.youtube.com/embed/iWo8Mgk4of4",
+    "tags": ["娛樂搞笑", "遊戲"],
+    "type": "youtube"
+  },
+  {
+    "id": 3,
+    "title": "藝術創作",
+    "url": "https://www.youtube.com/embed/Hakpc95Y0TE",
+    "tags": ["藝術"],
+    "type": "youtube"
+  },
+  {
+    "id": 4,
+    "title": "惡整時刻",
+    "url": "https://www.youtube.com/embed/-ManL9W5yPA",
+    "tags": ["惡整"],
+    "type": "youtube"
+  }
+] 

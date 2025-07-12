@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SITDown 管理介面</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .sit-text {
+            background: linear-gradient(45deg, #4ecdc4, #45b7aa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 8px;
+        }
+        
+        .section h2 {
+            color: #4ecdc4;
+            margin-bottom: 15px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: bold;
+        }
+        
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        button {
+            background: #4ecdc4;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-right: 10px;
+        }
+        
+        button:hover {
+            background: #45b7aa;
+        }
+        
+        button.danger {
+            background: #ff6b6b;
+        }
+        
+        button.danger:hover {
+            background: #ff5252;
+        }
+        
+        .video-list {
+            margin-top: 20px;
+        }
+        
+        .video-item {
+            background: white;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            border: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .video-info {
+            flex: 1;
+        }
+        
+        .video-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .video-url {
+            color: #666;
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+        
+        .video-tags {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+        
+        .tag {
+            background: #e8f4f8;
+            color: #4ecdc4;
+            padding: 3px 8px;
+            border-radius: 15px;
+            font-size: 12px;
+        }
+        
+        .video-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #4ecdc4;
+        }
+        
+        .stat-label {
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .message {
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-size: 16px;
+            color: #666;
+            transition: all 0.3s;
+        }
+        
+        .tab.active {
+            color: #4ecdc4;
+            border-bottom-color: #4ecdc4;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1><span class="sit-text">SIT</span>Down 管理介面</h1>
+        
+        <div class="message" id="message"></div>
+        
+        <div class="stats" id="stats">
+            <div class="stat-card">
+                <div class="stat-number" id="total-videos">0</div>
+                <div class="stat-label">總影片數</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="total-tags">0</div>
+                <div class="stat-label">總標籤數</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="backend-status">離線</div>
+                <div class="stat-label">後端狀態</div>
+            </div>
+        </div>
+        
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('add')">新增影片</button>
+            <button class="tab" onclick="switchTab('batch')">批量匯入</button>
+            <button class="tab" onclick="switchTab('list')">影片列表</button>
+        </div>
+        
+        <!-- 新增影片 -->
+        <div class="tab-content active" id="tab-add">
+            <div class="section">
+                <h2>新增單個影片</h2>
+                <form id="add-video-form">
+                    <div class="form-group">
+                        <label for="video-url">影片網址 *</label>
+                        <input type="url" id="video-url" placeholder="https://www.youtube.com/watch?v=..." required>
+                    </div>
+                    <div class="form-group">
+                        <label for="video-title">影片標題（選填，留空會自動生成）</label>
+                        <input type="text" id="video-title" placeholder="精彩影片">
+                    </div>
+                    <div class="form-group">
+                        <label for="video-tags">標籤（用逗號分隔）</label>
+                        <input type="text" id="video-tags" placeholder="娛樂, 搞笑, 經典">
+                    </div>
+                    <button type="submit">新增影片</button>
+                </form>
+            </div>
+        </div>
+        
+        <!-- 批量匯入 -->
+        <div class="tab-content" id="tab-batch">
+            <div class="section">
+                <h2>批量匯入影片</h2>
+                <div class="form-group">
+                    <label for="batch-input">貼上 CSV 格式資料（標籤,網址）</label>
+                    <textarea id="batch-input" placeholder="娛樂搞笑,https://www.youtube.com/watch?v=dQw4w9WgXcQ
+教學/料理,https://youtu.be/1-SJGQ2HLp8
+藝術、風景,https://www.youtube.com/shorts/LXb3EKWsInQ"></textarea>
+                </div>
+                <button onclick="processBatch()">批量匯入</button>
+                <button onclick="loadSampleBatch()">載入範例</button>
+            </div>
+        </div>
+        
+        <!-- 影片列表 -->
+        <div class="tab-content" id="tab-list">
+            <div class="section">
+                <h2>影片列表</h2>
+                <div class="video-list" id="video-list">
+                    <div class="loading">載入中...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:3000/api';
+        let videos = [];
+        let tags = [];
+        
+        // 頁面載入時初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            checkBackendStatus();
+            loadVideos();
+            loadStats();
+            
+            // 綁定表單提交事件
+            document.getElementById('add-video-form').addEventListener('submit', handleAddVideo);
+        });
+        
+        // 檢查後端狀態
+        async function checkBackendStatus() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/videos`);
+                if (response.ok) {
+                    document.getElementById('backend-status').textContent = '運行中';
+                    document.getElementById('backend-status').style.color = '#28a745';
+                }
+            } catch (error) {
+                document.getElementById('backend-status').textContent = '離線';
+                document.getElementById('backend-status').style.color = '#dc3545';
+                showMessage('無法連接到後端伺服器，請確認後端正在運行', 'error');
+            }
+        }
+        
+        // 載入統計資料
+        async function loadStats() {
+            try {
+                // 載入影片數量
+                const videosResponse = await fetch(`${API_BASE_URL}/videos`);
+                if (videosResponse.ok) {
+                    const videosData = await videosResponse.json();
+                    document.getElementById('total-videos').textContent = videosData.data.length;
+                }
+                
+                // 載入標籤數量
+                const tagsResponse = await fetch(`${API_BASE_URL}/tags`);
+                if (tagsResponse.ok) {
+                    const tagsData = await tagsResponse.json();
+                    document.getElementById('total-tags').textContent = tagsData.data.length;
+                }
+            } catch (error) {
+                console.error('載入統計資料失敗:', error);
+            }
+        }
+        
+        // 切換標籤頁
+        function switchTab(tabName) {
+            // 更新標籤按鈕狀態
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // 顯示對應內容
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+            
+            // 如果切換到列表，重新載入
+            if (tabName === 'list') {
+                loadVideos();
+            }
+        }
+        
+        // 新增單個影片
+        async function handleAddVideo(e) {
+            e.preventDefault();
+            
+            const url = document.getElementById('video-url').value;
+            const title = document.getElementById('video-title').value;
+            const tagsStr = document.getElementById('video-tags').value;
+            const tags = tagsStr ? tagsStr.split(',').map(t => t.trim()).filter(t => t) : [];
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/videos`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ url, title, tags })
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    showMessage('影片新增成功！', 'success');
+                    document.getElementById('add-video-form').reset();
+                    loadStats();
+                } else {
+                    const error = await response.json();
+                    showMessage(`新增失敗: ${error.error}`, 'error');
+                }
+            } catch (error) {
+                showMessage(`新增失敗: ${error.message}`, 'error');
+            }
+        }
+        
+        // 批量處理
+        async function processBatch() {
+            const input = document.getElementById('batch-input').value;
+            if (!input.trim()) {
+                showMessage('請輸入資料', 'error');
+                return;
+            }
+            
+            const videos = [];
+            const rows = input.split('\n');
+            
+            rows.forEach(row => {
+                const trimmedRow = row.trim();
+                if (!trimmedRow) return;
+                
+                const parts = trimmedRow.split(',');
+                if (parts.length >= 2) {
+                    const tags = parts[0].trim().split(/[\/、]/).map(t => t.trim()).filter(t => t);
+                    const url = parts.slice(1).join(',').trim();
+                    videos.push({ url, tags });
+                }
+            });
+            
+            if (videos.length === 0) {
+                showMessage('沒有有效的資料', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/videos/batch`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ videos })
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    showMessage(`成功匯入 ${result.data.length} 個影片！`, 'success');
+                    document.getElementById('batch-input').value = '';
+                    loadStats();
+                } else {
+                    const error = await response.json();
+                    showMessage(`匯入失敗: ${error.error}`, 'error');
+                }
+            } catch (error) {
+                showMessage(`匯入失敗: ${error.message}`, 'error');
+            }
+        }
+        
+        // 載入範例批量資料
+        function loadSampleBatch() {
+            const sampleData = `娛樂搞笑,https://www.youtube.com/watch?v=dQw4w9WgXcQ
+教學/料理,https://youtu.be/1-SJGQ2HLp8
+藝術、風景,https://www.youtube.com/shorts/LXb3EKWsInQ
+音樂,https://www.youtube.com/watch?v=kJQP7kiw5Fk
+運動,https://www.w3schools.com/html/mov_bbb.mp4
+動物/療癒,https://www.youtube.com/watch?v=J---aiyznGQ
+科技,https://www.youtube.com/embed/9bZkp7q19f0
+遊戲,https://www.youtube.com/watch?v=hTWKbfoikeg`;
+            document.getElementById('batch-input').value = sampleData;
+        }
+        
+        // 載入影片列表
+        async function loadVideos() {
+            const listContainer = document.getElementById('video-list');
+            listContainer.innerHTML = '<div class="loading">載入中...</div>';
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/videos`);
+                if (response.ok) {
+                    const result = await response.json();
+                    videos = result.data;
+                    renderVideoList();
+                } else {
+                    listContainer.innerHTML = '<div class="error">載入失敗</div>';
+                }
+            } catch (error) {
+                listContainer.innerHTML = '<div class="error">無法連接到後端</div>';
+            }
+        }
+        
+        // 渲染影片列表
+        function renderVideoList() {
+            const listContainer = document.getElementById('video-list');
+            
+            if (videos.length === 0) {
+                listContainer.innerHTML = '<div class="loading">沒有影片</div>';
+                return;
+            }
+            
+            listContainer.innerHTML = videos.map(video => `
+                <div class="video-item">
+                    <div class="video-info">
+                        <div class="video-title">${video.title}</div>
+                        <div class="video-url">${video.url}</div>
+                        <div class="video-tags">
+                            ${video.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
+                        </div>
+                    </div>
+                    <div class="video-actions">
+                        <button class="danger" onclick="deleteVideo(${video.id})">刪除</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // 刪除影片
+        async function deleteVideo(id) {
+            if (!confirm('確定要刪除這個影片嗎？')) return;
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/videos/${id}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    showMessage('影片已刪除', 'success');
+                    loadVideos();
+                    loadStats();
+                } else {
+                    const error = await response.json();
+                    showMessage(`刪除失敗: ${error.error}`, 'error');
+                }
+            } catch (error) {
+                showMessage(`刪除失敗: ${error.message}`, 'error');
+            }
+        }
+        
+        // 顯示訊息
+        function showMessage(text, type) {
+            const messageEl = document.getElementById('message');
+            messageEl.textContent = text;
+            messageEl.className = `message ${type}`;
+            messageEl.style.display = 'block';
+            
+            setTimeout(() => {
+                messageEl.style.display = 'none';
+            }, 5000);
+        }
+    </script>
+</body>
+</html> 

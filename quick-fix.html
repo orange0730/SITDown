@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>標籤系統快速修復</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #1a1a1a;
+            color: white;
+            line-height: 1.6;
+        }
+        .code-block {
+            background: #2d2d2d;
+            border: 1px solid #444;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+            position: relative;
+            overflow-x: auto;
+        }
+        .copy-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .copy-btn:hover {
+            background: #45a049;
+        }
+        h2 {
+            color: #4CAF50;
+            margin-top: 30px;
+        }
+        .warning {
+            background: #5d2d2d;
+            border: 1px solid #f44336;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .success {
+            background: #2d5d2d;
+            border: 1px solid #4CAF50;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 標籤系統快速修復指南</h1>
+    
+    <div class="warning">
+        ⚠️ 請在 <strong>index.html</strong> 頁面上執行以下代碼，不是在這個頁面！
+    </div>
+    
+    <h2>步驟 1：開啟 index.html</h2>
+    <p>在瀏覽器中開啟您的 index.html 主頁面</p>
+    
+    <h2>步驟 2：開啟開發者工具</h2>
+    <p>按 <strong>F12</strong> 或右鍵選擇「檢查」來開啟開發者工具，然後切換到 <strong>Console（控制台）</strong> 標籤</p>
+    
+    <h2>步驟 3：執行修復代碼</h2>
+    <p>複製下面的代碼並貼到控制台中執行：</p>
+    
+    <div class="code-block">
+        <button class="copy-btn" onclick="copyCode('fix1')">複製代碼</button>
+        <pre id="fix1">// 🔧 修復標籤可見性和拖曳功能
+(function fixTags() {
+    // 1. 檢查標籤是否存在
+    const tags = document.querySelectorAll('.draggable-tag');
+    console.log(`找到 ${tags.length} 個標籤`);
+    
+    if (tags.length === 0) {
+        console.error('❌ 沒有找到任何標籤！');
+        return;
+    }
+    
+    // 2. 修復每個標籤的樣式
+    tags.forEach((tag, index) => {
+        // 確保標籤可見
+        tag.style.opacity = '1';
+        tag.style.display = 'block';
+        tag.style.visibility = 'visible';
+        tag.style.pointerEvents = 'all';
+        tag.style.position = 'absolute';
+        tag.style.zIndex = '1000';
+        
+        // 設置隨機位置（如果標籤在螢幕外）
+        const rect = tag.getBoundingClientRect();
+        if (rect.left < 0 || rect.top < 0 || 
+            rect.right > window.innerWidth || 
+            rect.bottom > window.innerHeight) {
+            
+            tag.style.left = Math.random() * (window.innerWidth - 150) + 'px';
+            tag.style.top = Math.random() * (window.innerHeight - 50) + 'px';
+        }
+        
+        // 添加視覺效果來確認標籤位置
+        tag.style.border = '2px solid #4CAF50';
+        tag.style.boxShadow = '0 0 10px #4CAF50';
+        
+        console.log(`✅ 修復標籤 ${index + 1}: ${tag.textContent}`);
+    });
+    
+    // 3. 修復標籤遊樂場
+    const playground = document.getElementById('tags-playground');
+    if (playground) {
+        playground.style.pointerEvents = 'all';
+        playground.style.zIndex = '100';
+        console.log('✅ 修復標籤遊樂場');
+    }
+    
+    // 4. 重新啟動飄動動畫
+    if (typeof startFloatingAnimation === 'function') {
+        tags.forEach(tag => {
+            startFloatingAnimation(tag, playground);
+        });
+        console.log('✅ 重新啟動飄動動畫');
+    }
+    
+    console.log('🎉 標籤修復完成！標籤現在應該有綠色邊框並可以拖曳');
+    
+    // 5 秒後移除綠色邊框
+    setTimeout(() => {
+        tags.forEach(tag => {
+            tag.style.border = '';
+            tag.style.boxShadow = '';
+        });
+        console.log('已移除測試邊框');
+    }, 5000);
+})();</pre>
+    </div>
+    
+    <h2>備用方案：創建測試標籤</h2>
+    <p>如果上面的修復沒有效果，試試創建一個測試標籤：</p>
+    
+    <div class="code-block">
+        <button class="copy-btn" onclick="copyCode('test1')">複製代碼</button>
+        <pre id="test1">// 🧪 創建一個測試標籤
+(function createTestTag() {
+    const testTag = document.createElement('div');
+    testTag.className = 'draggable-tag';
+    testTag.textContent = '測試標籤';
+    testTag.style.cssText = `
+        position: fixed !important;
+        left: 50% !important;
+        top: 50% !important;
+        transform: translate(-50%, -50%) !important;
+        z-index: 99999 !important;
+        background: rgba(255, 0, 0, 0.8) !important;
+        color: white !important;
+        padding: 20px 30px !important;
+        font-size: 20px !important;
+        cursor: grab !important;
+        border-radius: 30px !important;
+        opacity: 1 !important;
+        pointer-events: all !important;
+    `;
+    
+    document.body.appendChild(testTag);
+    
+    // 添加簡單的拖曳功能
+    let isDragging = false;
+    let startX, startY;
+    
+    testTag.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        startX = e.clientX - testTag.offsetLeft;
+        startY = e.clientY - testTag.offsetTop;
+        testTag.style.cursor = 'grabbing';
+    });
+    
+    document.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        testTag.style.left = (e.clientX - startX) + 'px';
+        testTag.style.top = (e.clientY - startY) + 'px';
+        testTag.style.transform = 'none';
+    });
+    
+    document.addEventListener('mouseup', () => {
+        isDragging = false;
+        testTag.style.cursor = 'grab';
+    });
+    
+    console.log('✅ 測試標籤已創建！應該在螢幕中央顯示一個紅色標籤');
+})();</pre>
+    </div>
+    
+    <h2>檢查標籤狀態</h2>
+    <p>執行這段代碼來查看所有標籤的詳細資訊：</p>
+    
+    <div class="code-block">
+        <button class="copy-btn" onclick="copyCode('check1')">複製代碼</button>
+        <pre id="check1">// 📊 檢查標籤系統狀態
+(function checkTagSystem() {
+    console.group('🏷️ 標籤系統診斷報告');
+    
+    // 檢查標籤
+    const tags = document.querySelectorAll('.draggable-tag');
+    console.log(`標籤數量: ${tags.length}`);
+    
+    if (tags.length > 0) {
+        console.group('標籤詳情:');
+        tags.forEach((tag, i) => {
+            const rect = tag.getBoundingClientRect();
+            const style = window.getComputedStyle(tag);
+            console.log(`${i+1}. ${tag.textContent}:`, {
+                位置: `(${Math.round(rect.left)}, ${Math.round(rect.top)})`,
+                大小: `${Math.round(rect.width)} x ${Math.round(rect.height)}`,
+                可見性: style.opacity,
+                顯示: style.display,
+                'z-index': style.zIndex,
+                'pointer-events': style.pointerEvents
+            });
+        });
+        console.groupEnd();
+    }
+    
+    // 檢查容器
+    const playground = document.getElementById('tags-playground');
+    const basket = document.getElementById('selection-basket');
+    
+    console.log('標籤遊樂場:', playground ? '✅ 存在' : '❌ 不存在');
+    console.log('選擇籃子:', basket ? '✅ 存在' : '❌ 不存在');
+    
+    // 檢查全域函數
+    console.log('飄動動畫函數:', typeof startFloatingAnimation === 'function' ? '✅ 可用' : '❌ 不可用');
+    console.log('影片庫:', typeof videoLibrary !== 'undefined' ? `✅ ${videoLibrary.length} 個影片` : '❌ 未載入');
+    
+    console.groupEnd();
+})();</pre>
+    </div>
+    
+    <div class="success">
+        💡 <strong>提示：</strong>執行代碼後，標籤應該會顯示綠色邊框並可以拖曳。如果還是看不到，可能需要檢查瀏覽器的控制台是否有錯誤訊息。
+    </div>
+    
+    <script>
+        function copyCode(id) {
+            const code = document.getElementById(id).textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                const btn = event.target;
+                const originalText = btn.textContent;
+                btn.textContent = '✓ 已複製';
+                btn.style.background = '#2d5d2d';
+                
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.style.background = '#4CAF50';
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html> 

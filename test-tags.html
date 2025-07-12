@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>標籤系統測試</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #222;
+            color: white;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #444;
+            border-radius: 8px;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .success {
+            background: #2d5d2d;
+            border: 1px solid #4CAF50;
+        }
+        .error {
+            background: #5d2d2d;
+            border: 1px solid #f44336;
+        }
+        .info {
+            background: #2d3d5d;
+            border: 1px solid #2196F3;
+        }
+        button {
+            margin: 5px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            background: #4CAF50;
+            color: white;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        #tag-container {
+            position: relative;
+            width: 100%;
+            height: 300px;
+            border: 2px dashed #666;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+        .test-tag {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 25px;
+            padding: 10px 18px;
+            cursor: grab;
+            user-select: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>標籤系統診斷測試</h1>
+    
+    <div class="test-section">
+        <h2>1. 資料載入測試</h2>
+        <button onclick="testDataLoading()">測試資料載入</button>
+        <div id="data-status"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>2. 標籤元素測試</h2>
+        <button onclick="testTagCreation()">測試標籤創建</button>
+        <button onclick="testTagAnimation()">測試標籤飄動</button>
+        <div id="tag-container"></div>
+        <div id="tag-status"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>3. 主頁面標籤檢查</h2>
+        <button onclick="checkMainPage()">檢查主頁面標籤</button>
+        <div id="main-status"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>4. Console 記錄</h2>
+        <div id="console-log" style="background: #111; padding: 10px; border-radius: 5px; font-family: monospace; font-size: 12px; max-height: 200px; overflow-y: auto;"></div>
+    </div>
+
+    <script>
+        // 記錄所有 console 訊息
+        const originalLog = console.log;
+        const originalError = console.error;
+        const originalWarn = console.warn;
+        const logDiv = document.getElementById('console-log');
+        
+        function addToLog(type, ...args) {
+            const msg = args.map(arg => 
+                typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
+            ).join(' ');
+            const entry = document.createElement('div');
+            entry.style.color = type === 'error' ? '#ff6b6b' : type === 'warn' ? '#ffb86c' : '#50fa7b';
+            entry.textContent = `[${type.toUpperCase()}] ${msg}`;
+            logDiv.appendChild(entry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+        
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            addToLog('log', ...args);
+        };
+        console.error = function(...args) {
+            originalError.apply(console, args);
+            addToLog('error', ...args);
+        };
+        console.warn = function(...args) {
+            originalWarn.apply(console, args);
+            addToLog('warn', ...args);
+        };
+        
+        // 測試函數
+        async function testDataLoading() {
+            const statusDiv = document.getElementById('data-status');
+            statusDiv.innerHTML = '';
+            
+            try {
+                // 載入主腳本
+                const script = document.createElement('script');
+                script.src = 'script.js';
+                document.body.appendChild(script);
+                
+                // 等待腳本載入
+                await new Promise(resolve => {
+                    script.onload = resolve;
+                    script.onerror = () => {
+                        throw new Error('無法載入 script.js');
+                    };
+                });
+                
+                statusDiv.innerHTML += '<div class="status success">✓ script.js 載入成功</div>';
+                
+                // 等待資料載入
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                
+                // 檢查資料
+                if (typeof videoLibrary !== 'undefined') {
+                    statusDiv.innerHTML += `<div class="status success">✓ 影片庫載入成功：${videoLibrary.length} 個影片</div>`;
+                    
+                    const tags = getAllTags();
+                    statusDiv.innerHTML += `<div class="status success">✓ 標籤載入成功：${tags.length} 個標籤</div>`;
+                    statusDiv.innerHTML += `<div class="status info">標籤列表：${tags.slice(0, 10).join(', ')}${tags.length > 10 ? '...' : ''}</div>`;
+                } else {
+                    statusDiv.innerHTML += '<div class="status error">✗ 影片庫未載入</div>';
+                }
+                
+            } catch (error) {
+                statusDiv.innerHTML += `<div class="status error">✗ 錯誤：${error.message}</div>`;
+            }
+        }
+        
+        function testTagCreation() {
+            const container = document.getElementById('tag-container');
+            const statusDiv = document.getElementById('tag-status');
+            
+            container.innerHTML = '';
+            statusDiv.innerHTML = '';
+            
+            const testTags = ['測試標籤1', '測試標籤2', '測試標籤3'];
+            
+            testTags.forEach((tag, index) => {
+                const tagElement = document.createElement('div');
+                tagElement.className = 'test-tag';
+                tagElement.textContent = tag;
+                tagElement.style.left = (50 + index * 150) + 'px';
+                tagElement.style.top = '50px';
+                container.appendChild(tagElement);
+            });
+            
+            statusDiv.innerHTML = '<div class="status success">✓ 測試標籤創建成功</div>';
+        }
+        
+        function testTagAnimation() {
+            const tags = document.querySelectorAll('.test-tag');
+            const statusDiv = document.getElementById('tag-status');
+            
+            if (tags.length === 0) {
+                statusDiv.innerHTML += '<div class="status error">✗ 請先創建測試標籤</div>';
+                return;
+            }
+            
+            tags.forEach(tag => {
+                const randomX = Math.random() * (tag.parentElement.offsetWidth - 100);
+                const randomY = Math.random() * (tag.parentElement.offsetHeight - 40);
+                tag.style.transition = 'all 2s ease';
+                tag.style.left = randomX + 'px';
+                tag.style.top = randomY + 'px';
+            });
+            
+            statusDiv.innerHTML += '<div class="status success">✓ 標籤動畫測試成功</div>';
+        }
+        
+        function checkMainPage() {
+            const statusDiv = document.getElementById('main-status');
+            statusDiv.innerHTML = '';
+            
+            // 檢查主頁面元素
+            const elements = {
+                'tags-playground': document.getElementById('tags-playground'),
+                'selection-basket': document.getElementById('selection-basket'),
+                'draggable-tag': document.querySelectorAll('.draggable-tag')
+            };
+            
+            for (const [name, element] of Object.entries(elements)) {
+                if (element && (element.length === undefined ? element : element.length > 0)) {
+                    if (name === 'draggable-tag') {
+                        statusDiv.innerHTML += `<div class="status success">✓ ${name}: 找到 ${element.length} 個標籤</div>`;
+                        
+                        // 檢查標籤的樣式
+                        if (element.length > 0) {
+                            const firstTag = element[0];
+                            const computedStyle = window.getComputedStyle(firstTag);
+                            statusDiv.innerHTML += `<div class="status info">第一個標籤樣式：
+                                <br>- position: ${computedStyle.position}
+                                <br>- opacity: ${computedStyle.opacity}
+                                <br>- display: ${computedStyle.display}
+                                <br>- z-index: ${computedStyle.zIndex}
+                                <br>- pointer-events: ${computedStyle.pointerEvents}
+                            </div>`;
+                        }
+                    } else {
+                        statusDiv.innerHTML += `<div class="status success">✓ ${name}: 存在</div>`;
+                        
+                        if (name === 'tags-playground') {
+                            const computedStyle = window.getComputedStyle(element);
+                            statusDiv.innerHTML += `<div class="status info">標籤遊樂場樣式：
+                                <br>- pointer-events: ${computedStyle.pointerEvents}
+                                <br>- z-index: ${computedStyle.zIndex}
+                            </div>`;
+                        }
+                    }
+                } else {
+                    statusDiv.innerHTML += `<div class="status error">✗ ${name}: 不存在</div>`;
+                }
+            }
+        }
+        
+        // 頁面載入時自動執行基本檢查
+        window.addEventListener('DOMContentLoaded', () => {
+            console.log('標籤測試頁面載入完成');
+        });
+    </script>
+</body>
+</html> 

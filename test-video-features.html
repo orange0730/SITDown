@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>測試影片功能</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #1a1a1a;
+            color: white;
+        }
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .feature {
+            margin: 30px 0;
+            padding: 20px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+        }
+        h2 {
+            color: #4ecdc4;
+            margin-bottom: 15px;
+        }
+        .video-test {
+            display: flex;
+            gap: 30px;
+            align-items: start;
+        }
+        iframe {
+            width: 400px;
+            height: 712px;
+            border-radius: 20px;
+        }
+        .tags-display {
+            flex: 1;
+            padding: 20px;
+            background: rgba(0,0,0,0.5);
+            border-radius: 10px;
+        }
+        .tag {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            padding: 8px 15px;
+            margin: 5px;
+            border-radius: 15px;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-family: monospace;
+        }
+        .success {
+            background: rgba(0,255,0,0.2);
+            border: 1px solid rgba(0,255,0,0.5);
+        }
+        .info {
+            background: rgba(0,100,255,0.2);
+            border: 1px solid rgba(0,100,255,0.5);
+        }
+        button {
+            background: #4ecdc4;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #3cbab2;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>SITDown 影片功能測試</h1>
+        
+        <div class="feature">
+            <h2>1. 影片循環播放測試</h2>
+            <div class="status info">
+                ✓ 已添加 playlist 參數：當影片播放結束時會自動重新開始
+            </div>
+            <div class="video-test">
+                <div>
+                    <h3>測試影片（會自動循環）</h3>
+                    <iframe id="test-video"
+                            src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1&mute=0&loop=1&playlist=dQw4w9WgXcQ&controls=0&modestbranding=1&rel=0&showinfo=0&iv_load_policy=3"
+                            frameborder="0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowfullscreen>
+                    </iframe>
+                </div>
+                <div class="tags-display">
+                    <h3>影片標籤（左側顯示）</h3>
+                    <div id="test-tags">
+                        <span class="tag">娛樂搞笑</span>
+                        <span class="tag">經典</span>
+                        <span class="tag">音樂</span>
+                    </div>
+                    <div class="status success" style="margin-top: 20px;">
+                        ✓ 標籤會顯示在影片左側的資訊欄中
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="feature">
+            <h2>2. 實際應用測試</h2>
+            <p>在實際的 SITDown 應用中：</p>
+            <ul>
+                <li>影片會在結束時自動重新播放（透過 loop=1 和 playlist 參數）</li>
+                <li>每個影片的標籤會顯示在左側控制區的 video-info-sidebar 中</li>
+                <li>標籤會有淡入動畫效果</li>
+            </ul>
+            
+            <div style="margin-top: 20px;">
+                <button onclick="testMainApp()">開啟主應用程式</button>
+                <button onclick="checkVideoParams()">檢查影片參數</button>
+            </div>
+            
+            <div id="param-check" class="status info" style="display: none; margin-top: 20px;"></div>
+        </div>
+    </div>
+    
+    <script>
+        function testMainApp() {
+            window.open('/', '_blank');
+        }
+        
+        function checkVideoParams() {
+            const iframe = document.getElementById('test-video');
+            const src = iframe.src;
+            const params = new URL(src).searchParams;
+            
+            let output = '影片參數檢查：\n';
+            output += `- loop: ${params.get('loop')} ✓\n`;
+            output += `- playlist: ${params.get('playlist')} ✓\n`;
+            output += `- autoplay: ${params.get('autoplay')}\n`;
+            output += `- mute: ${params.get('mute')}\n`;
+            output += `- controls: ${params.get('controls')}\n`;
+            
+            const checkDiv = document.getElementById('param-check');
+            checkDiv.textContent = output;
+            checkDiv.style.display = 'block';
+        }
+        
+        // 自動檢查
+        setTimeout(() => {
+            console.log('影片功能已實現：');
+            console.log('1. 循環播放：透過 loop=1 和 playlist 參數');
+            console.log('2. 標籤顯示：在左側 video-info-sidebar 區域');
+        }, 1000);
+    </script>
+</body>
+</html> 

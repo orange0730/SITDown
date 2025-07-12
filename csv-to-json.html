@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSV 轉 JSON 工具</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #1a1a1a;
+            color: white;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #4ecdc4;
+        }
+        .section {
+            margin: 20px 0;
+            padding: 20px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+        }
+        button {
+            background: #4ecdc4;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #3cbab2;
+        }
+        textarea {
+            width: 100%;
+            height: 400px;
+            background: rgba(0,0,0,0.5);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 5px;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        .stats {
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(78, 205, 196, 0.2);
+            border-radius: 5px;
+        }
+        .tag-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 10px 0;
+        }
+        .tag {
+            background: rgba(78, 205, 196, 0.3);
+            padding: 5px 15px;
+            border-radius: 15px;
+            border: 1px solid rgba(78, 205, 196, 0.6);
+        }
+        .upload-area {
+            border: 2px dashed #4ecdc4;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            margin: 20px 0;
+            background: rgba(78, 205, 196, 0.1);
+            cursor: pointer;
+        }
+        .upload-area:hover {
+            background: rgba(78, 205, 196, 0.2);
+        }
+        input[type="file"] {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>📄 CSV 轉 JSON 工具</h1>
+    
+    <div class="section">
+        <h2>1. 上傳 CSV 檔案</h2>
+        <div class="upload-area" id="uploadArea">
+            <p>📁 點擊上傳或拖拽 CSV 檔案到這裡</p>
+            <input type="file" id="fileInput" accept=".csv">
+        </div>
+    </div>
+    
+    <div class="section" id="tagsSection" style="display: none;">
+        <h2>2. 發現的標籤</h2>
+        <div id="discoveredTags" class="tag-list"></div>
+    </div>
+    
+    <div class="section">
+        <h2>3. 統計資訊</h2>
+        <div id="stats" class="stats"></div>
+    </div>
+    
+    <div class="section">
+        <h2>4. JSON 輸出</h2>
+        <textarea id="jsonOutput" readonly placeholder="JSON 會顯示在這裡..."></textarea>
+        <button onclick="copyJSON()">📋 複製 JSON</button>
+        <button onclick="downloadJSON()">💾 下載 JSON</button>
+        <button onclick="saveToLocalStorage()">📱 儲存到 LocalStorage</button>
+    </div>
+    
+    <script>
+        let processedData = [];
+        let collectedTags = new Set();
+        let errorLog = [];
+        
+        // 上傳區域事件
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        
+        uploadArea.addEventListener('click', () => fileInput.click());
+        
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.style.background = 'rgba(78, 205, 196, 0.3)';
+        });
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.style.background = 'rgba(78, 205, 196, 0.1)';
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.style.background = 'rgba(78, 205, 196, 0.1)';
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0 && files[0].name.endsWith('.csv')) {
+                handleFile(files[0]);
+            }
+        });
+        
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+        
+        function handleFile(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                processCSV(e.target.result);
+            };
+            reader.readAsText(file, 'UTF-8');
+        }
+        
+        function parseCSVRow(row) {
+            const result = [];
+            let current = '';
+            let inQuotes = false;
+            
+            for (let i = 0; i < row.length; i++) {
+                const char = row[i];
+                
+                if (char === '"') {
+                    inQuotes = !inQuotes;
+                } else if (char === ',' && !inQuotes) {
+                    result.push(current);
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+            
+            result.push(current);
+            return result;
+        }
+        
+        function processCSV(content) {
+            const lines = content.split('\n').filter(line => line.trim());
+            processedData = [];
+            collectedTags.clear();
+            errorLog = [];
+            
+            let validCount = 0;
+            let invalidCount = 0;
+            let tagUsage = {};
+            
+            // 跳過標題行，從第二行開始
+            for (let i = 1; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (!line) continue;
+                
+                const columns = parseCSVRow(line);
+                
+                if (columns.length < 2) {
+                    errorLog.push({
+                        line: i + 1,
+                        reason: '欄位不足（需要至少 2 欄：標籤, URL）',
+                        content: line.substring(0, 100) + (line.length > 100 ? '...' : '')
+                    });
+                    invalidCount++;
+                    continue;
+                }
+                
+                const tagsStr = columns[0] ? columns[0].trim() : '';
+                const url = columns[1] ? columns[1].trim() : '';
+                
+                // 檢查各種錯誤情況
+                if (!tagsStr) {
+                    errorLog.push({
+                        line: i + 1,
+                        reason: '沒有標籤',
+                        content: `URL: ${url}`
+                    });
+                    invalidCount++;
+                    continue;
+                }
+                
+                if (!url) {
+                    errorLog.push({
+                        line: i + 1,
+                        reason: '沒有 URL',
+                        content: `標籤: ${tagsStr}`
+                    });
+                    invalidCount++;
+                    continue;
+                }
+                
+                if (!isValidUrl(url)) {
+                    errorLog.push({
+                        line: i + 1,
+                        reason: '無效的 URL（必須是 YouTube 或 .mp4/.webm 檔案）',
+                        content: `URL: ${url}`
+                    });
+                    invalidCount++;
+                    continue;
+                }
+                
+                // 解析標籤
+                const tagList = tagsStr.split(/[,，\/、]/)
+                    .map(tag => tag.trim())
+                    .filter(tag => tag.length > 0);
+                
+                if (tagList.length === 0) {
+                    errorLog.push({
+                        line: i + 1,
+                        reason: '標籤解析後為空',
+                        content: `原始標籤: ${tagsStr}`
+                    });
+                    invalidCount++;
+                    continue;
+                }
+                
+                // 成功處理
+                const video = {
+                    id: processedData.length + 1,
+                    title: generateTitle(tagList[0]),
+                    url: convertToEmbedUrl(url),
+                    tags: tagList,
+                    type: detectVideoType(url)
+                };
+                
+                processedData.push(video);
+                validCount++;
+                
+                // 收集所有標籤並統計使用次數
+                tagList.forEach(tag => {
+                    collectedTags.add(tag);
+                    tagUsage[tag] = (tagUsage[tag] || 0) + 1;
+                });
+            }
+            
+            // 顯示收集到的標籤
+            displayCollectedTags();
+            
+            // 顯示統計資訊
+            displayStats(validCount, invalidCount, tagUsage);
+            
+            // 顯示 JSON
+            displayJSON();
+        }
+        
+        function displayCollectedTags() {
+            const tagsSection = document.getElementById('tagsSection');
+            const container = document.getElementById('discoveredTags');
+            
+            if (collectedTags.size > 0) {
+                tagsSection.style.display = 'block';
+                container.innerHTML = Array.from(collectedTags)
+                    .sort()
+                    .map(tag => `<span class="tag">${tag}</span>`)
+                    .join('');
+            } else {
+                tagsSection.style.display = 'none';
+            }
+        }
+        
+        function isValidUrl(url) {
+            return url.includes('youtube') || 
+                   url.includes('youtu.be') || 
+                   url.endsWith('.mp4') ||
+                   url.endsWith('.webm');
+        }
+        
+        function detectVideoType(url) {
+            if (url.includes('youtube') || url.includes('youtu.be')) {
+                return 'youtube';
+            }
+            return 'direct';
+        }
+        
+        function convertToEmbedUrl(url) {
+            if (url.includes('youtube.com/shorts/')) {
+                const match = url.match(/shorts\/([a-zA-Z0-9_-]+)/);
+                if (match) return `https://www.youtube.com/embed/${match[1]}`;
+            } else if (url.includes('youtu.be/')) {
+                const match = url.match(/youtu\.be\/([a-zA-Z0-9_-]+)/);
+                if (match) return `https://www.youtube.com/embed/${match[1]}`;
+            } else if (url.includes('youtube.com/watch')) {
+                const match = url.match(/[?&]v=([a-zA-Z0-9_-]+)/);
+                if (match) return `https://www.youtube.com/embed/${match[1]}`;
+            }
+            return url;
+        }
+        
+        function generateTitle(tag) {
+            const templates = {
+                '娛樂搞笑': ['搞笑瞬間', '爆笑時刻', '有趣片段'],
+                '遊戲': ['遊戲精彩時刻', '遊戲技巧', '遊戲亮點'],
+                '藝術': ['藝術創作', '創意作品', '藝術展示'],
+                '電影': ['電影片段', '影視精選', '經典場面'],
+                '日常': ['生活日常', '日常紀錄', '生活片段'],
+                '動物': ['可愛動物', '動物趣事', '萌寵時刻'],
+                '療愈': ['療癒時光', '放鬆片段', '治癒瞬間'],
+                '音樂舞蹈': ['音樂表演', '舞蹈展示', '藝術表演'],
+                '時尚': ['時尚穿搭', '美妝技巧', '風格展示'],
+                '教學': ['實用教學', '技巧分享', '學習時刻'],
+                '挑戰': ['有趣挑戰', '創意挑戰', '技能挑戰'],
+                '實驗創意': ['創意實驗', '科學實驗', '創新想法'],
+                '運動': ['運動精彩', '健身技巧', '運動瞬間'],
+                '名人': ['名人時刻', '明星片段', '人物專訪'],
+                '科技': ['科技新知', '技術展示', '創新科技'],
+                '旅遊': ['旅遊景點', '旅行分享', '風景欣賞'],
+                '勵志': ['勵志故事', '正能量時刻', '激勵人心'],
+                '惡整': ['惡整時刻', '整人精選', '惡作劇集錦'],
+                '食物': ['美食分享', '料理教學', '食物探索']
+            };
+            
+            const defaultTemplates = ['精彩影片', '推薦觀看', '值得一看'];
+            const selectedTemplates = templates[tag] || defaultTemplates;
+            return selectedTemplates[Math.floor(Math.random() * selectedTemplates.length)];
+        }
+        
+        function displayStats(validCount, invalidCount, tagUsage) {
+            const statsDiv = document.getElementById('stats');
+            
+            let html = `
+                <p>✅ 成功處理：${validCount} 個影片</p>
+                <p>❌ 跳過：${invalidCount} 個項目（無效 URL 或無標籤）</p>
+                <p>🏷️ 總共發現：${collectedTags.size} 個不同標籤</p>
+                <p>📊 標籤使用統計：</p>
+                <ul>
+            `;
+            
+            // 排序並顯示標籤使用情況
+            Object.entries(tagUsage)
+                .sort((a, b) => b[1] - a[1])
+                .forEach(([tag, count]) => {
+                    html += `<li>${tag}: ${count} 次</li>`;
+                });
+            
+            html += '</ul>';
+            
+            // 如果有錯誤，顯示錯誤詳情
+            if (errorLog.length > 0) {
+                html += `
+                    <details style="margin-top: 20px; cursor: pointer;">
+                        <summary style="color: #ff6b6b; font-weight: bold;">
+                            ⚠️ 查看被跳過項目的詳細原因（點擊展開）
+                        </summary>
+                        <div style="margin-top: 10px; max-height: 300px; overflow-y: auto; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 5px;">
+                `;
+                
+                // 按錯誤原因分組
+                const errorsByReason = {};
+                errorLog.forEach(error => {
+                    if (!errorsByReason[error.reason]) {
+                        errorsByReason[error.reason] = [];
+                    }
+                    errorsByReason[error.reason].push(error);
+                });
+                
+                // 顯示每種錯誤類型
+                Object.entries(errorsByReason).forEach(([reason, errors]) => {
+                    html += `<p style="color: #ffa94d; margin-top: 10px;">📌 ${reason} (${errors.length} 個):</p>`;
+                    html += '<ul style="font-size: 12px; color: #ccc;">';
+                    errors.slice(0, 10).forEach(error => {
+                        html += `<li>第 ${error.line} 行: ${error.content}</li>`;
+                    });
+                    if (errors.length > 10) {
+                        html += `<li>... 還有 ${errors.length - 10} 個類似錯誤</li>`;
+                    }
+                    html += '</ul>';
+                });
+                
+                html += `
+                        </div>
+                    </details>
+                `;
+            }
+            
+            statsDiv.innerHTML = html;
+        }
+        
+        function displayJSON() {
+            const jsonOutput = document.getElementById('jsonOutput');
+            jsonOutput.value = JSON.stringify(processedData, null, 2);
+        }
+        
+        function copyJSON() {
+            const jsonOutput = document.getElementById('jsonOutput');
+            jsonOutput.select();
+            document.execCommand('copy');
+            alert('JSON 已複製到剪貼簿！');
+        }
+        
+        function downloadJSON() {
+            const blob = new Blob([JSON.stringify(processedData, null, 2)], {
+                type: 'application/json'
+            });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'videos.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+        
+        function saveToLocalStorage() {
+            localStorage.setItem('sitdown_manual_videos', JSON.stringify(processedData));
+            alert(`已儲存 ${processedData.length} 個影片到 LocalStorage！\n請確保 script.js 中的 USE_BACKEND 設為 false`);
+        }
+    </script>
+</body>
+</html> 

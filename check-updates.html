@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>檢查更新</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #1a1a1a;
+            color: white;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        h1, h2 {
+            color: #4ecdc4;
+        }
+        .check-item {
+            margin: 20px 0;
+            padding: 20px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+        }
+        .status {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 15px;
+            margin-left: 10px;
+        }
+        .success {
+            background: rgba(0,255,0,0.3);
+            border: 1px solid rgba(0,255,0,0.6);
+        }
+        .warning {
+            background: rgba(255,255,0,0.3);
+            border: 1px solid rgba(255,255,0,0.6);
+        }
+        .error {
+            background: rgba(255,0,0,0.3);
+            border: 1px solid rgba(255,0,0,0.6);
+        }
+        button {
+            background: #4ecdc4;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #3cbab2;
+        }
+        pre {
+            background: rgba(0,0,0,0.5);
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        .fix-code {
+            background: rgba(78, 205, 196, 0.1);
+            border: 1px solid rgba(78, 205, 196, 0.3);
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 檢查系統更新</h1>
+    
+    <div class="check-item">
+        <h2>1. 首頁標籤點選檢查</h2>
+        <p>問題：標籤無法點選或拖曳</p>
+        <p>解決方案：已調整 z-index 層級</p>
+        <button onclick="checkTagsClickable()">檢查標籤狀態</button>
+        <span id="tags-status" class="status"></span>
+        
+        <div class="fix-code">
+            <p>如果仍有問題，在控制台執行：</p>
+            <pre>// 強制修復標籤層級
+document.querySelectorAll('.draggable-tag').forEach(tag => {
+    tag.style.zIndex = '999';
+    tag.style.pointerEvents = 'all';
+    tag.style.position = 'absolute';
+});</pre>
+        </div>
+    </div>
+    
+    <div class="check-item">
+        <h2>2. 影片頁面標籤顯示</h2>
+        <p>改變：移除標題，只顯示標籤</p>
+        <p>標籤樣式：垂直排列，使用主題色</p>
+        <button onclick="checkVideoTags()">檢查標籤樣式</button>
+        <span id="video-tags-status" class="status"></span>
+    </div>
+    
+    <div class="check-item">
+        <h2>3. CSS 樣式檢查</h2>
+        <button onclick="checkStyles()">檢查 CSS 設定</button>
+        <div id="style-check" style="margin-top: 15px;"></div>
+    </div>
+    
+    <div class="check-item">
+        <h2>4. 快速導航</h2>
+        <button onclick="window.open('/', '_blank')">開啟主頁面</button>
+        <button onclick="window.open('/import-csv.html', '_blank')">CSV 匯入工具</button>
+        <button onclick="window.open('/test-video-features.html', '_blank')">影片功能測試</button>
+    </div>
+    
+    <script>
+        function checkTagsClickable() {
+            const tags = document.querySelectorAll('.draggable-tag');
+            const statusEl = document.getElementById('tags-status');
+            
+            if (window.location.pathname !== '/') {
+                statusEl.className = 'status warning';
+                statusEl.textContent = '請在主頁面執行此檢查';
+                return;
+            }
+            
+            if (tags.length > 0) {
+                let clickable = true;
+                tags.forEach(tag => {
+                    const styles = window.getComputedStyle(tag);
+                    if (styles.pointerEvents === 'none' || parseInt(styles.zIndex) < 100) {
+                        clickable = false;
+                    }
+                });
+                
+                if (clickable) {
+                    statusEl.className = 'status success';
+                    statusEl.textContent = `✅ ${tags.length} 個標籤可以點選`;
+                } else {
+                    statusEl.className = 'status error';
+                    statusEl.textContent = '❌ 標籤可能無法點選';
+                }
+            } else {
+                statusEl.className = 'status error';
+                statusEl.textContent = '❌ 找不到標籤';
+            }
+        }
+        
+        function checkVideoTags() {
+            const statusEl = document.getElementById('video-tags-status');
+            const videoTitle = document.getElementById('video-title');
+            const videoTags = document.getElementById('video-tags');
+            
+            if (videoTitle) {
+                statusEl.className = 'status warning';
+                statusEl.textContent = '⚠️ 標題元素仍存在，需要更新 HTML';
+            } else if (videoTags) {
+                statusEl.className = 'status success';
+                statusEl.textContent = '✅ 只顯示標籤，已移除標題';
+            } else {
+                statusEl.className = 'status error';
+                statusEl.textContent = '❌ 找不到標籤容器';
+            }
+        }
+        
+        function checkStyles() {
+            const checkDiv = document.getElementById('style-check');
+            let html = '<h3>CSS 設定值：</h3><pre>';
+            
+            // 檢查重要的 CSS 值
+            const checks = [
+                { selector: '.tags-playground', property: 'z-index', expected: '15' },
+                { selector: '.draggable-tag', property: 'z-index', expected: '200' },
+                { selector: '.homepage-content', property: 'z-index', expected: '10' },
+                { selector: '.video-tags', property: 'flex-direction', expected: 'column' }
+            ];
+            
+            html += '選擇器               | 屬性           | 預期值  | 實際值\n';
+            html += '-------------------|---------------|--------|--------\n';
+            
+            checks.forEach(check => {
+                const el = document.querySelector(check.selector);
+                if (el) {
+                    const value = window.getComputedStyle(el)[check.property];
+                    const match = value === check.expected ? '✅' : '❌';
+                    html += `${check.selector.padEnd(18)} | ${check.property.padEnd(13)} | ${check.expected.padEnd(6)} | ${value} ${match}\n`;
+                } else {
+                    html += `${check.selector.padEnd(18)} | ${check.property.padEnd(13)} | ${check.expected.padEnd(6)} | (未找到元素)\n`;
+                }
+            });
+            
+            html += '</pre>';
+            checkDiv.innerHTML = html;
+        }
+        
+        // 頁面載入時的提示
+        window.addEventListener('DOMContentLoaded', () => {
+            console.log('=== 系統更新檢查工具 ===');
+            console.log('1. 首頁標籤現在應該可以點選和拖曳');
+            console.log('2. 影片左側只顯示標籤，沒有標題');
+            console.log('3. 標籤使用垂直排列和主題色樣式');
+        });
+    </script>
+</body>
+</html> 

@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SITDown - 手動輸入影片資料</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .input-section {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        textarea {
+            width: 100%;
+            height: 300px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        button {
+            background: #4ecdc4;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #45b7aa;
+        }
+        .instructions {
+            background: #e8f4f8;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .result {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .success {
+            color: green;
+        }
+        .error {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <h1>SITDown 手動輸入影片資料</h1>
+    
+    <div class="instructions">
+        <h3>使用說明：</h3>
+        <p>如果無法連接 Google Sheets，你可以在這裡手動輸入影片資料。</p>
+        <p>格式：<strong>標籤,影片網址</strong>（每行一個影片）</p>
+        <p>範例：</p>
+        <pre>娛樂搞笑,https://www.youtube.com/watch?v=dQw4w9WgXcQ
+教學/料理,https://youtu.be/1-SJGQ2HLp8
+運動,https://example.com/sports.mp4</pre>
+    </div>
+    
+    <div class="input-section">
+        <h3>輸入影片資料：</h3>
+        <textarea id="csvInput" placeholder="標籤,影片網址
+娛樂搞笑,https://www.youtube.com/watch?v=VIDEO_ID
+教學,https://example.com/video.mp4"></textarea>
+        <div>
+            <button onclick="processCSV()">處理並儲存</button>
+            <button onclick="loadSample()">載入範例資料</button>
+            <button onclick="clearData()">清除</button>
+        </div>
+    </div>
+    
+    <div class="input-section">
+        <h3>處理結果：</h3>
+        <div id="result" class="result">等待輸入資料...</div>
+    </div>
+    
+    <div class="input-section">
+        <button onclick="openSITDown()">開啟 SITDown</button>
+        <button onclick="downloadJSON()">下載 JSON 檔案</button>
+    </div>
+
+    <script>
+        function loadSample() {
+            const sampleData = `娛樂搞笑,https://www.youtube.com/watch?v=dQw4w9WgXcQ
+教學/料理,https://youtu.be/1-SJGQ2HLp8
+藝術、風景,https://www.youtube.com/shorts/LXb3EKWsInQ
+音樂,https://www.youtube.com/watch?v=kJQP7kiw5Fk
+運動,https://www.w3schools.com/html/mov_bbb.mp4
+動物/療癒,https://www.youtube.com/watch?v=J---aiyznGQ
+科技,https://www.youtube.com/embed/9bZkp7q19f0
+遊戲,https://www.youtube.com/watch?v=hTWKbfoikeg`;
+            document.getElementById('csvInput').value = sampleData;
+        }
+        
+        function clearData() {
+            document.getElementById('csvInput').value = '';
+            document.getElementById('result').textContent = '等待輸入資料...';
+        }
+        
+        function processCSV() {
+            const csvText = document.getElementById('csvInput').value;
+            const resultDiv = document.getElementById('result');
+            
+            if (!csvText.trim()) {
+                resultDiv.innerHTML = '<span class="error">請輸入資料！</span>';
+                return;
+            }
+            
+            try {
+                const videos = [];
+                const rows = csvText.split(/\r?\n/);
+                
+                rows.forEach((row, index) => {
+                    const trimmedRow = row.trim();
+                    if (!trimmedRow) return;
+                    
+                    const columns = trimmedRow.split(',');
+                    if (columns.length >= 2) {
+                        const tags = columns[0].trim();
+                        const url = columns.slice(1).join(',').trim(); // 處理網址中可能的逗號
+                        
+                        if (tags && url) {
+                            const tagList = tags.split(/[,，\/、]/).map(t => t.trim()).filter(t => t);
+                            const video = {
+                                id: videos.length + 1,
+                                title: `影片 ${videos.length + 1}`,
+                                url: processURL(url),
+                                tags: tagList,
+                                type: detectVideoType(url)
+                            };
+                            videos.push(video);
+                        }
+                    }
+                });
+                
+                // 儲存到 localStorage
+                localStorage.setItem('sitdown_manual_videos', JSON.stringify(videos));
+                
+                resultDiv.innerHTML = `<span class="success">成功處理 ${videos.length} 個影片！</span>\n\n`;
+                videos.forEach(v => {
+                    resultDiv.innerHTML += `影片 ${v.id}:\n`;
+                    resultDiv.innerHTML += `  標籤: ${v.tags.join(', ')}\n`;
+                    resultDiv.innerHTML += `  網址: ${v.url}\n`;
+                    resultDiv.innerHTML += `  類型: ${v.type}\n\n`;
+                });
+                
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">處理錯誤: ${error.message}</span>`;
+            }
+        }
+        
+        function processURL(url) {
+            if (url.includes('youtube.com/watch')) {
+                const match = url.match(/[?&]v=([a-zA-Z0-9_-]+)/);
+                if (match) return `https://www.youtube.com/embed/${match[1]}`;
+            } else if (url.includes('youtu.be/')) {
+                const match = url.match(/youtu\.be\/([a-zA-Z0-9_-]+)/);
+                if (match) return `https://www.youtube.com/embed/${match[1]}`;
+            } else if (url.includes('youtube.com/shorts/')) {
+                const match = url.match(/shorts\/([a-zA-Z0-9_-]+)/);
+                if (match) return `https://www.youtube.com/embed/${match[1]}`;
+            }
+            return url;
+        }
+        
+        function detectVideoType(url) {
+            if (url.includes('youtube') || url.includes('youtu.be')) {
+                return 'youtube';
+            } else if (url.endsWith('.mp4') || url.endsWith('.webm') || url.endsWith('.ogg')) {
+                return 'direct';
+            }
+            return 'unknown';
+        }
+        
+        function openSITDown() {
+            window.open('index.html', '_blank');
+        }
+        
+        function downloadJSON() {
+            const data = localStorage.getItem('sitdown_manual_videos');
+            if (!data) {
+                alert('請先處理資料！');
+                return;
+            }
+            
+            const blob = new Blob([data], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'sitdown_videos.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html> 

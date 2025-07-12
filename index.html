@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SITDown - 你的影片流</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- 首頁 -->
+    <div id="homepage" class="page active">
+        <!-- 標籤遊樂場（全螢幕） -->
+        <div class="tags-playground" id="tags-playground"></div>
+        
+        <!-- 繩子容器 -->
+        <svg class="rope-container" id="rope-container" width="100%" height="100%">
+            <!-- 繩子會動態生成在這裡 -->
+        </svg>
+        
+        <!-- 橫式主要內容 -->
+        <div class="homepage-content">
+            <!-- 左側標題區 -->
+            <div class="left-section">
+                <h1 class="logo"><span class="sit-text">SIT</span>Down</h1>
+                <p class="subtitle">拖曳標籤到籃子中<br>開始你的影片之旅</p>
+                <div class="start-section">
+                    <button class="start-btn" onclick="startWatching()">開始觀看</button>
+                    <p class="skip-text">或者直接開始隨機播放</p>
+                </div>
+            </div>
+            
+            <!-- 右側籃子區 -->
+            <div class="right-section">
+                <div class="selection-basket-container">
+                    <div class="basket-title">已選擇</div>
+                    <div class="selection-basket" id="selection-basket">
+                        <div class="basket-icon">🧺</div>
+                        <div class="basket-hint">拖拽標籤到這裡</div>
+                    </div>
+                    <div class="selected-count" id="selected-count">0 個標籤</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 新增：功能介紹區域 -->
+        <div class="features-section">
+            <div class="feature-card">
+                <div class="feature-icon">🎯</div>
+                <h3>智能推薦</h3>
+                <p>根據您選擇的標籤，為您推薦相關影片</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🎲</div>
+                <h3>隨機探索</h3>
+                <p>不選擇標籤，直接開始隨機播放</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🎨</div>
+                <h3>互動體驗</h3>
+                <p>拖曳標籤，感受有趣的物理碰撞效果</p>
+            </div>
+        </div>
+        
+        <!-- 新增：快速提示 -->
+        <div class="quick-tips">
+            <div class="tip">💡 提示：標籤會在碰到 SITDown 文字時反彈！</div>
+            <div class="tip">🐾 向上拉動貓爪也可以開始觀看</div>
+        </div>
+        
+        <!-- 貓爪拉動區域 -->
+        <div class="cat-paw-container" id="cat-paw-container">
+            <div class="cat-paw" id="cat-paw">
+                <div class="paw-pad">🐾</div>
+                <div class="claw claw-1">🖤</div>
+                <div class="claw claw-2">🖤</div>
+                <div class="claw claw-3">🖤</div>
+            </div>
+            <div class="pull-hint" id="pull-hint">
+                <span class="pull-arrow">⬆️</span>
+                <span class="pull-text">向上拉動開始</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 影片播放頁面 -->
+    <div id="video-page" class="page">
+        <!-- 橫式影片容器 -->
+        <div class="video-container">
+            <!-- 左側控制區 -->
+            <div class="left-controls">
+                <button class="home-btn" onclick="goHome()">🏠</button>
+                <div class="video-info-sidebar">
+                    <div class="video-tags" id="video-tags"></div>
+                </div>
+            </div>
+            
+            <!-- 中央影片區域（豎直） -->
+            <div class="video-display">
+                <iframe id="video-frame" 
+                        src="" 
+                        frameborder="0" 
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                        allowfullscreen
+                        referrerpolicy="strict-origin-when-cross-origin"></iframe>
+                <video id="video-player" 
+                       controls 
+                       autoplay 
+                       loop
+                       style="display:none; width:100%; height:100%; object-fit:contain; border-radius:20px;">
+                </video>
+                <div class="loading-indicator" id="loading-indicator">
+                    <div class="loading-spinner"></div>
+                    載入中...
+                </div>
+            </div>
+            
+            <!-- 右側控制區 -->
+            <div class="right-controls">
+                <div class="video-controls">
+                    <button class="control-btn prev-btn" onclick="previousVideo()">
+                        <span>⬆</span>
+                        <span>上一個</span>
+                    </button>
+                    <button class="control-btn next-btn" onclick="nextVideo()">
+                        <span>⬇</span>
+                        <span>下一個</span>
+                    </button>
+                </div>
+                
+                <!-- 播放資訊 -->
+                <div class="play-info">
+                    <div class="current-index" id="current-index">1 / 10</div>
+                    <div class="play-hint">使用上下鍵或滾輪切換</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html> 

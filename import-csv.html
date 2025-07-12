@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSV 影片庫匯入工具</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #1a1a1a;
+            color: white;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #4ecdc4;
+        }
+        .upload-area {
+            border: 2px dashed #4ecdc4;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            margin: 20px 0;
+            background: rgba(78, 205, 196, 0.1);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .upload-area:hover {
+            background: rgba(78, 205, 196, 0.2);
+        }
+        .upload-area.drag-over {
+            background: rgba(78, 205, 196, 0.3);
+            transform: scale(1.05);
+        }
+        input[type="file"] {
+            display: none;
+        }
+        button {
+            background: #4ecdc4;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #3cbab2;
+        }
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+        .results {
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(0,0,0,0.5);
+            border-radius: 10px;
+            display: none;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .success {
+            background: rgba(0,255,0,0.2);
+            border: 1px solid rgba(0,255,0,0.5);
+        }
+        .error {
+            background: rgba(255,0,0,0.2);
+            border: 1px solid rgba(255,0,0,0.5);
+        }
+        .info {
+            background: rgba(0,100,255,0.2);
+            border: 1px solid rgba(0,100,255,0.5);
+        }
+        .preview {
+            max-height: 300px;
+            overflow-y: auto;
+            background: rgba(0,0,0,0.3);
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background: rgba(78, 205, 196, 0.2);
+        }
+        .tag {
+            background: rgba(78, 205, 196, 0.3);
+            padding: 2px 8px;
+            border-radius: 10px;
+            margin: 2px;
+            display: inline-block;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+    <h1>CSV 影片庫匯入工具</h1>
+    
+    <div class="status info">
+        📋 請上傳你的 CSV 檔案（格式：類型,連結,其他）
+    </div>
+    
+    <div class="upload-area" id="uploadArea">
+        <p>📁 點擊選擇或拖拽 CSV 檔案到這裡</p>
+        <input type="file" id="fileInput" accept=".csv">
+    </div>
+    
+    <div style="margin: 20px 0;">
+        <button id="processBtn" disabled>處理並儲存到 LocalStorage</button>
+        <button id="backendBtn" disabled>匯入到後端資料庫</button>
+        <button onclick="window.location.href='/'">返回主頁</button>
+    </div>
+    
+    <div class="results" id="results">
+        <h2>處理結果</h2>
+        <div id="resultStatus"></div>
+        <div id="preview" class="preview"></div>
+    </div>
+    
+    <script>
+        let csvData = [];
+        let processedVideos = [];
+        
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const processBtn = document.getElementById('processBtn');
+        const backendBtn = document.getElementById('backendBtn');
+        const results = document.getElementById('results');
+        const resultStatus = document.getElementById('resultStatus');
+        const preview = document.getElementById('preview');
+        
+        // 拖拽上傳
+        uploadArea.addEventListener('click', () => fileInput.click());
+        
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('drag-over');
+        });
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('drag-over');
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('drag-over');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0 && files[0].name.endsWith('.csv')) {
+                handleFile(files[0]);
+            }
+        });
+        
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+        
+        function handleFile(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                parseCSV(e.target.result);
+            };
+            reader.readAsText(file, 'UTF-8');
+        }
+        
+        function parseCSV(content) {
+            results.style.display = 'block';
+            
+            const lines = content.split('\n').filter(line => line.trim());
+            csvData = [];
+            processedVideos = [];
+            
+            let validCount = 0;
+            let invalidCount = 0;
+            
+            // 跳過標題行
+            for (let i = 1; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (!line) continue;
+                
+                const columns = parseCSVRow(line);
+                
+                if (columns.length >= 2) {
+                    const tags = columns[0] ? columns[0].trim() : '';
+                    const url = columns[1] ? columns[1].trim() : '';
+                    
+                    if (tags && url && isValidUrl(url)) {
+                        const tagList = tags.split(/[,，\/、]/)
+                            .map(tag => tag.trim())
+                            .filter(tag => tag.length > 0);
+                        
+                        const video = {
+                            id: processedVideos.length + 1,
+                            title: generateTitle(tagList[0]),
+                            url: convertToEmbedUrl(url),
+                            tags: tagList,
+                            type: detectVideoType(url)
+                        };
+                        
+                        processedVideos.push(video);
+                        validCount++;
+                    } else {
+                        invalidCount++;
+                    }
+                }
+            }
+            
+            // 顯示結果
+            resultStatus.innerHTML = `
+                <div class="status success">
+                    ✅ 成功解析 ${validCount} 個影片
+                    ${invalidCount > 0 ? `<br>⚠️ 跳過 ${invalidCount} 個無效項目` : ''}
+                </div>
+            `;
+            
+            // 顯示預覽
+            showPreview();
+            
+            // 啟用按鈕
+            processBtn.disabled = false;
+            backendBtn.disabled = false;
+        }
+        
+        function parseCSVRow(row) {
+            const result = [];
+            let current = '';
+            let inQuotes = false;
+            
+            for (let i = 0; i < row.length; i++) {
+                const char = row[i];
+                
+                if (char === '"') {
+                    inQuotes = !inQuotes;
+                } else if (char === ',' && !inQuotes) {
+                    result.push(current);
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+            
+            result.push(current);
+            return result;
+        }
+        
+        function isValidUrl(url) {
+            return url.includes('youtube') || 
+                   url.includes('youtu.be') || 
+                   url.endsWith('.mp4') ||
+                   url.endsWith('.webm');
+        }
+        
+        function detectVideoType(url) {
+            if (url.includes('youtube') || url.includes('youtu.be')) {
+                return 'youtube';
+            }
+            return 'direct';
+        }
+        
+        function convertToEmbedUrl(url) {
+            if (url.includes('youtube.com/shorts/')) {
+                const match = url.match(/shorts\/([a-zA-Z0-9_-]+)/);
+                if (match) return `https://www.youtube.com/embed/${match[1]}`;
+            } else if (url.includes('youtu.be/')) {
+                const match = url.match(/youtu\.be\/([a-zA-Z0-9_-]+)/);
+                if (match) return `https://www.youtube.com/embed/${match[1]}`;
+            } else if (url.includes('youtube.com/watch')) {
+                const match = url.match(/[?&]v=([a-zA-Z0-9_-]+)/);
+                if (match) return `https://www.youtube.com/embed/${match[1]}`;
+            }
+            return url;
+        }
+        
+        function generateTitle(tag) {
+            const templates = {
+                '娛樂搞笑': ['搞笑瞬間', '爆笑時刻', '有趣片段'],
+                '遊戲': ['遊戲精彩時刻', '遊戲技巧', '遊戲亮點'],
+                '藝術': ['藝術創作', '創意作品', '藝術展示'],
+                '惡整': ['惡整時刻', '整人精選', '惡作劇集錦']
+            };
+            
+            const defaultTemplates = ['精彩影片', '推薦觀看', '值得一看'];
+            const selectedTemplates = templates[tag] || defaultTemplates;
+            return selectedTemplates[Math.floor(Math.random() * selectedTemplates.length)];
+        }
+        
+        function showPreview() {
+            let html = '<h3>前 10 個影片預覽：</h3>';
+            html += '<table><tr><th>標題</th><th>標籤</th><th>類型</th></tr>';
+            
+            processedVideos.slice(0, 10).forEach(video => {
+                html += '<tr>';
+                html += `<td>${video.title}</td>`;
+                html += `<td>${video.tags.map(tag => `<span class="tag">${tag}</span>`).join(' ')}</td>`;
+                html += `<td>${video.type}</td>`;
+                html += '</tr>';
+            });
+            
+            html += '</table>';
+            
+            if (processedVideos.length > 10) {
+                html += `<p>...還有 ${processedVideos.length - 10} 個影片</p>`;
+            }
+            
+            preview.innerHTML = html;
+        }
+        
+        // 儲存到 LocalStorage
+        processBtn.addEventListener('click', () => {
+            localStorage.setItem('sitdown_manual_videos', JSON.stringify(processedVideos));
+            
+            resultStatus.innerHTML += `
+                <div class="status success">
+                    ✅ 已儲存 ${processedVideos.length} 個影片到本地儲存
+                    <br>請確保主程式的 USE_BACKEND 設為 false
+                </div>
+            `;
+            
+            setTimeout(() => {
+                if (confirm('儲存成功！是否返回主頁？')) {
+                    window.location.href = '/';
+                }
+            }, 1000);
+        });
+        
+        // 匯入到後端
+        backendBtn.addEventListener('click', async () => {
+            try {
+                const response = await fetch('http://localhost:3000/api/videos/batch', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ videos: processedVideos })
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    resultStatus.innerHTML += `
+                        <div class="status success">
+                            ✅ 已匯入 ${processedVideos.length} 個影片到後端資料庫
+                            <br>請確保主程式的 USE_BACKEND 設為 true
+                        </div>
+                    `;
+                } else {
+                    throw new Error('匯入失敗');
+                }
+            } catch (error) {
+                resultStatus.innerHTML += `
+                    <div class="status error">
+                        ❌ 匯入失敗：${error.message}
+                        <br>請確保後端伺服器正在運行
+                    </div>
+                `;
+            }
+        });
+    </script>
+</body>
+</html> 

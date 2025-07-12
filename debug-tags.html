@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>標籤系統即時調試</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #222;
+            color: white;
+        }
+        .debug-panel {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.9);
+            border: 2px solid #4CAF50;
+            border-radius: 10px;
+            padding: 20px;
+            max-width: 400px;
+            max-height: 80vh;
+            overflow-y: auto;
+            z-index: 10000;
+        }
+        .tag-info {
+            margin: 10px 0;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            font-size: 12px;
+        }
+        .highlight {
+            background: rgba(255, 107, 107, 0.3) !important;
+            border: 2px solid #ff6b6b !important;
+        }
+        button {
+            margin: 5px;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            background: #4CAF50;
+            color: white;
+        }
+        button:hover {
+            background: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="debug-panel">
+        <h2>標籤系統調試面板</h2>
+        
+        <div>
+            <button onclick="showAllTags()">顯示所有標籤位置</button>
+            <button onclick="fixTagsVisibility()">修復標籤可見性</button>
+            <button onclick="testDragTag()">測試拖曳功能</button>
+        </div>
+        
+        <div id="tag-list"></div>
+        
+        <div style="margin-top: 20px;">
+            <h3>快速修復</h3>
+            <button onclick="moveTagsToFront()">將標籤移到最前面</button>
+            <button onclick="makeTagsVisible()">強制顯示所有標籤</button>
+            <button onclick="restartAnimations()">重啟飄動動畫</button>
+        </div>
+        
+        <div id="debug-info" style="margin-top: 20px; font-size: 11px; font-family: monospace;"></div>
+    </div>
+
+    <script>
+        // 載入主頁面
+        const iframe = document.createElement('iframe');
+        iframe.src = 'index.html';
+        iframe.style.position = 'fixed';
+        iframe.style.top = '0';
+        iframe.style.left = '0';
+        iframe.style.width = '100%';
+        iframe.style.height = '100%';
+        iframe.style.border = 'none';
+        iframe.style.zIndex = '1';
+        document.body.appendChild(iframe);
+        
+        let iframeDoc;
+        
+        iframe.onload = function() {
+            iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+            updateDebugInfo();
+            setInterval(updateDebugInfo, 1000);
+        };
+        
+        function updateDebugInfo() {
+            if (!iframeDoc) return;
+            
+            const tags = iframeDoc.querySelectorAll('.draggable-tag');
+            const playground = iframeDoc.getElementById('tags-playground');
+            const basket = iframeDoc.getElementById('selection-basket');
+            
+            const tagList = document.getElementById('tag-list');
+            tagList.innerHTML = '<h3>標籤狀態 (' + tags.length + ' 個)</h3>';
+            
+            tags.forEach((tag, index) => {
+                const rect = tag.getBoundingClientRect();
+                const computedStyle = iframe.contentWindow.getComputedStyle(tag);
+                
+                const info = document.createElement('div');
+                info.className = 'tag-info';
+                info.innerHTML = `
+                    <strong>${index + 1}. ${tag.textContent}</strong><br>
+                    位置: (${Math.round(rect.left)}, ${Math.round(rect.top)})<br>
+                    大小: ${Math.round(rect.width)} x ${Math.round(rect.height)}<br>
+                    顯示: ${computedStyle.display}<br>
+                    透明度: ${computedStyle.opacity}<br>
+                    z-index: ${computedStyle.zIndex}<br>
+                    pointer-events: ${computedStyle.pointerEvents}<br>
+                    <button onclick="highlightTag(${index})">高亮顯示</button>
+                `;
+                tagList.appendChild(info);
+            });
+            
+            // 更新額外資訊
+            const debugInfo = document.getElementById('debug-info');
+            debugInfo.innerHTML = `
+                <strong>系統狀態:</strong><br>
+                標籤遊樂場: ${playground ? '存在' : '不存在'}<br>
+                選擇籃子: ${basket ? '存在' : '不存在'}<br>
+                視窗大小: ${iframe.contentWindow.innerWidth} x ${iframe.contentWindow.innerHeight}<br>
+            `;
+        }
+        
+        function showAllTags() {
+            if (!iframeDoc) return;
+            
+            const tags = iframeDoc.querySelectorAll('.draggable-tag');
+            tags.forEach(tag => {
+                // 添加紅色邊框
+                tag.style.border = '3px solid red';
+                tag.style.boxShadow = '0 0 20px red';
+                
+                // 顯示位置資訊
+                const info = iframeDoc.createElement('div');
+                info.style.position = 'absolute';
+                info.style.left = tag.style.left;
+                info.style.top = (parseInt(tag.style.top) - 30) + 'px';
+                info.style.background = 'red';
+                info.style.color = 'white';
+                info.style.padding = '5px';
+                info.style.fontSize = '12px';
+                info.style.zIndex = '10000';
+                info.textContent = tag.textContent;
+                tag.parentElement.appendChild(info);
+                
+                setTimeout(() => {
+                    info.remove();
+                    tag.style.border = '';
+                    tag.style.boxShadow = '';
+                }, 5000);
+            });
+        }
+        
+        function highlightTag(index) {
+            if (!iframeDoc) return;
+            
+            const tags = iframeDoc.querySelectorAll('.draggable-tag');
+            const tag = tags[index];
+            if (tag) {
+                tag.classList.add('highlight');
+                tag.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                
+                setTimeout(() => {
+                    tag.classList.remove('highlight');
+                }, 3000);
+            }
+        }
+        
+        function fixTagsVisibility() {
+            if (!iframeDoc) return;
+            
+            const tags = iframeDoc.querySelectorAll('.draggable-tag');
+            const playground = iframeDoc.getElementById('tags-playground');
+            
+            // 修復遊樂場
+            if (playground) {
+                playground.style.pointerEvents = 'all';
+                playground.style.zIndex = '5';
+            }
+            
+            // 修復每個標籤
+            tags.forEach(tag => {
+                tag.style.opacity = '1';
+                tag.style.display = 'block';
+                tag.style.visibility = 'visible';
+                tag.style.pointerEvents = 'all';
+                tag.style.position = 'absolute';
+                tag.style.zIndex = '100';
+                
+                // 確保在可見範圍內
+                const rect = tag.getBoundingClientRect();
+                if (rect.left < 0 || rect.top < 0 || 
+                    rect.right > iframe.contentWindow.innerWidth || 
+                    rect.bottom > iframe.contentWindow.innerHeight) {
+                    
+                    tag.style.left = Math.random() * (iframe.contentWindow.innerWidth - 100) + 'px';
+                    tag.style.top = Math.random() * (iframe.contentWindow.innerHeight - 100) + 'px';
+                }
+            });
+            
+            alert('已嘗試修復標籤可見性！');
+        }
+        
+        function moveTagsToFront() {
+            if (!iframeDoc) return;
+            
+            const tags = iframeDoc.querySelectorAll('.draggable-tag');
+            tags.forEach(tag => {
+                tag.style.zIndex = '9999';
+            });
+            
+            alert('已將所有標籤移到最前面！');
+        }
+        
+        function makeTagsVisible() {
+            if (!iframeDoc) return;
+            
+            const tags = iframeDoc.querySelectorAll('.draggable-tag');
+            tags.forEach((tag, index) => {
+                tag.style.opacity = '1';
+                tag.style.background = 'rgba(255, 0, 0, 0.8)';
+                tag.style.color = 'white';
+                tag.style.fontSize = '20px';
+                tag.style.padding = '20px';
+                tag.style.position = 'fixed';
+                tag.style.left = (100 + index * 150) + 'px';
+                tag.style.top = '100px';
+                tag.style.zIndex = '99999';
+            });
+            
+            alert('已強制顯示所有標籤（紅色背景）！');
+        }
+        
+        function testDragTag() {
+            if (!iframeDoc) return;
+            
+            const tag = iframeDoc.querySelector('.draggable-tag');
+            if (tag) {
+                // 模擬拖曳
+                const event = new MouseEvent('mousedown', {
+                    bubbles: true,
+                    cancelable: true,
+                    view: iframe.contentWindow
+                });
+                tag.dispatchEvent(event);
+                
+                alert('已在第一個標籤上觸發 mousedown 事件，請嘗試移動滑鼠！');
+            }
+        }
+        
+        function restartAnimations() {
+            if (!iframe.contentWindow.startFloatingAnimation) {
+                alert('動畫函數未找到！');
+                return;
+            }
+            
+            const tags = iframeDoc.querySelectorAll('.draggable-tag');
+            const playground = iframeDoc.getElementById('tags-playground');
+            
+            tags.forEach(tag => {
+                iframe.contentWindow.startFloatingAnimation(tag, playground);
+            });
+            
+            alert('已重新啟動所有標籤的飄動動畫！');
+        }
+    </script>
+</body>
+</html> 

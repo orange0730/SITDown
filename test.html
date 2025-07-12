@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SITDown 測試頁面</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 5px;
+        }
+        button {
+            background: #4ecdc4;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #45b7aa;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            background: #e8f4f8;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .error {
+            background: #ffe8e8;
+            color: #d00;
+        }
+        .success {
+            background: #e8ffe8;
+            color: #080;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>SITDown 測試頁面</h1>
+        
+        <div class="test-section">
+            <h2>1. Google Sheets 連接測試</h2>
+            <button onclick="testGoogleSheets()">測試連接</button>
+            <div id="sheets-result" class="result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>2. 手動輸入測試資料</h2>
+            <p>貼上你的 CSV 資料（A欄: 標籤, B欄: YouTube 網址）</p>
+            <textarea id="csv-input" rows="10" style="width:100%; font-family:monospace;">
+娛樂搞笑,https://www.youtube.com/watch?v=dQw4w9WgXcQ
+教學/料理,https://youtu.be/1-SJGQ2HLp8
+藝術、風景,https://www.youtube.com/shorts/LXb3EKWsInQ
+音樂,https://www.youtube.com/watch?v=kJQP7kiw5Fk
+            </textarea>
+            <button onclick="testCSVParsing()">測試解析</button>
+            <div id="csv-result" class="result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>3. URL 轉換測試</h2>
+            <input type="text" id="url-input" placeholder="輸入 YouTube URL" style="width:70%; padding:5px;">
+            <button onclick="testURLConversion()">測試轉換</button>
+            <div id="url-result" class="result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>4. 開啟主頁面</h2>
+            <button onclick="window.open('index.html', '_blank')">開啟 SITDown</button>
+            <button onclick="window.open('manual-input.html', '_blank')">手動輸入資料</button>
+        </div>
+        
+        <div class="test-section">
+            <h2>5. 診斷工具</h2>
+            <button onclick="checkGoogleSheetsPermission()">檢查 Google Sheets 權限</button>
+            <button onclick="clearLocalStorage()">清除本地儲存</button>
+            <div id="diag-result" class="result"></div>
+        </div>
+    </div>
+
+    <script>
+        const SHEET_ID = '1HHkBtepfUpc_QimDa6MK_KdHBswUbBGuWrWQzt15YDw';
+        const GID = '317495087'; // 你的工作表 ID
+        
+        async function testGoogleSheets() {
+            const resultDiv = document.getElementById('sheets-result');
+            resultDiv.textContent = '測試中...';
+            
+            try {
+                const csvUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${GID}`;
+                resultDiv.textContent += `\n測試 URL: ${csvUrl}\n\n`;
+                const response = await fetch(csvUrl);
+                
+                if (response.ok) {
+                    const text = await response.text();
+                    const rows = text.split(/\r?\n/);
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `✓ 連接成功！\n總行數: ${rows.length}\n\n前5行:\n`;
+                    for (let i = 0; i < Math.min(5, rows.length); i++) {
+                        resultDiv.textContent += `第${i+1}行: ${rows[i]}\n`;
+                    }
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `✗ 連接失敗: HTTP ${response.status}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `✗ 錯誤: ${error.message}`;
+            }
+        }
+        
+        function testCSVParsing() {
+            const csvText = document.getElementById('csv-input').value;
+            const resultDiv = document.getElementById('csv-result');
+            
+            try {
+                const rows = csvText.split(/\r?\n/);
+                const videos = [];
+                
+                rows.forEach((row, index) => {
+                    if (!row.trim()) return;
+                    
+                    const columns = row.split(',');
+                    if (columns.length >= 2) {
+                        videos.push({
+                            tags: columns[0].trim(),
+                            url: columns[1].trim()
+                        });
+                    }
+                });
+                
+                resultDiv.className = 'result success';
+                resultDiv.textContent = `✓ 解析成功！找到 ${videos.length} 個影片\n\n`;
+                videos.forEach((v, i) => {
+                    resultDiv.textContent += `影片 ${i+1}:\n  標籤: ${v.tags}\n  網址: ${v.url}\n\n`;
+                });
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `✗ 解析錯誤: ${error.message}`;
+            }
+        }
+        
+        function testURLConversion() {
+            const url = document.getElementById('url-input').value;
+            const resultDiv = document.getElementById('url-result');
+            
+            if (!url) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = '請輸入 URL';
+                return;
+            }
+            
+            const embedUrl = convertToEmbedUrl(url);
+            if (embedUrl) {
+                resultDiv.className = 'result success';
+                resultDiv.textContent = `✓ 轉換成功！\n原始: ${url}\n轉換: ${embedUrl}`;
+            } else {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `✗ 轉換失敗！無法辨識的 YouTube URL 格式`;
+            }
+        }
+        
+        function convertToEmbedUrl(url) {
+            url = url.trim();
+            let videoId = '';
+            
+            if (url.includes('youtu.be/')) {
+                const match = url.match(/youtu\.be\/([a-zA-Z0-9_-]+)/);
+                if (match) videoId = match[1];
+            } else if (url.includes('youtube.com/watch')) {
+                const match = url.match(/[?&]v=([a-zA-Z0-9_-]+)/);
+                if (match) videoId = match[1];
+            } else if (url.includes('youtube.com/shorts/')) {
+                const match = url.match(/shorts\/([a-zA-Z0-9_-]+)/);
+                if (match) videoId = match[1];
+            }
+            
+            return videoId ? `https://www.youtube.com/embed/${videoId}` : null;
+        }
+        
+        async function checkGoogleSheetsPermission() {
+            const resultDiv = document.getElementById('diag-result');
+            resultDiv.textContent = '檢查中...';
+            
+            try {
+                // 測試是否可以訪問 Google Sheets
+                const testUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit`;
+                const editResponse = await fetch(testUrl, { mode: 'no-cors' });
+                
+                resultDiv.className = 'result';
+                resultDiv.innerHTML = `
+                    <h3>診斷結果：</h3>
+                    <p>1. 請確認 Google Sheets 的分享設定：</p>
+                    <ul>
+                        <li>開啟 Google Sheets</li>
+                        <li>點擊右上角的「共用」按鈕</li>
+                        <li>在「一般存取權」選擇「知道連結的任何人」</li>
+                        <li>權限設定為「檢視者」</li>
+                    </ul>
+                    <p>2. Google Sheets 編輯連結：</p>
+                    <a href="${testUrl}" target="_blank">${testUrl}</a>
+                    <p>3. 如果仍無法連接，請使用「手動輸入資料」功能</p>
+                `;
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = '檢查失敗: ' + error.message;
+            }
+        }
+        
+        function clearLocalStorage() {
+            const resultDiv = document.getElementById('diag-result');
+            localStorage.removeItem('sitdown_manual_videos');
+            resultDiv.className = 'result success';
+            resultDiv.textContent = '✓ 已清除本地儲存的手動輸入資料';
+        }
+    </script>
+</body>
+</html> 
