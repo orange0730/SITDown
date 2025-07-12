@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>檢查訪問來源</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .info {
+            background: #f0f0f0;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        .good {
+            color: green;
+            font-weight: bold;
+        }
+        .bad {
+            color: red;
+            font-weight: bold;
+        }
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>檢查訪問來源</h1>
+    
+    <div class="info">
+        <h2>當前訪問資訊：</h2>
+        <p><strong>Origin:</strong> <span id="origin"></span></p>
+        <p><strong>Protocol:</strong> <span id="protocol"></span></p>
+        <p><strong>Host:</strong> <span id="host"></span></p>
+        <p><strong>完整 URL:</strong> <span id="url"></span></p>
+    </div>
+    
+    <div id="diagnosis"></div>
+    
+    <script>
+        // 顯示當前訪問資訊
+        document.getElementById('origin').textContent = window.location.origin;
+        document.getElementById('protocol').textContent = window.location.protocol;
+        document.getElementById('host').textContent = window.location.host;
+        document.getElementById('url').textContent = window.location.href;
+        
+        // 診斷問題
+        const diagnosis = document.getElementById('diagnosis');
+        
+        if (window.location.protocol === 'file:') {
+            diagnosis.innerHTML = `
+                <div class="warning">
+                    <h3 class="bad">❌ 錯誤：您正在直接開啟檔案！</h3>
+                    <p>這會導致 CORS 錯誤，無法載入 Google Sheets 資料。</p>
+                    <h4>解決方法：</h4>
+                    <ol>
+                        <li>確保 Python HTTP 伺服器正在運行</li>
+                        <li>在瀏覽器中輸入：<strong>http://localhost:8080</strong></li>
+                        <li>不要直接雙擊 HTML 檔案</li>
+                    </ol>
+                </div>
+            `;
+        } else if (window.location.host === 'localhost:8080' || window.location.host === '127.0.0.1:8080') {
+            diagnosis.innerHTML = `
+                <div class="info">
+                    <h3 class="good">✅ 正確：您正在透過 HTTP 伺服器訪問！</h3>
+                    <p>如果仍有 CORS 錯誤，可能是：</p>
+                    <ul>
+                        <li>Google Sheets 權限設定問題</li>
+                        <li>網路連線問題</li>
+                        <li>瀏覽器快取問題（請按 Ctrl+F5 強制重新載入）</li>
+                    </ul>
+                </div>
+            `;
+        } else {
+            diagnosis.innerHTML = `
+                <div class="info">
+                    <h3>🤔 不確定的訪問方式</h3>
+                    <p>請確保您是透過 <strong>http://localhost:8080</strong> 訪問網站。</p>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html> 

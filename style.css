@@ -19,13 +19,15 @@ body {
     height: 100vh;
     top: 0;
     left: 0;
-    opacity: 0;
-    transform: translateY(100%);
+    display: none;
+    opacity: 1;
+    transform: translateY(0);
     transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
     z-index: 1;
 }
 
 .page.active {
+    display: block;
     opacity: 1;
     transform: translateY(0);
     z-index: 2;
@@ -58,6 +60,8 @@ body {
     padding: 50px;
     max-width: 50%;
     pointer-events: all;
+    position: relative;
+    z-index: 20;  /* 確保在標籤之上 */
 }
 
 .right-section {
@@ -67,6 +71,8 @@ body {
     justify-content: center;
     padding: 60px;
     pointer-events: all;
+    position: relative;
+    z-index: 20;  /* 確保在標籤之上 */
 }
 
 .logo {
@@ -132,7 +138,7 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    z-index: 15;  /* 提高到比 homepage-content 更高 */
+    z-index: 5;  /* 降低到比 homepage-content 更低 */
     pointer-events: all; /* 允許接收事件 */
 }
 
@@ -149,7 +155,7 @@ body {
     white-space: nowrap;
     font-size: 0.9rem;
     user-select: none;
-    z-index: 200;  /* 提高 z-index */
+    z-index: 100;  /* 降低 z-index，但仍然高於背景 */
     opacity: 0;
     transform: scale(0.8) translateY(20px);
     animation: tagAppear 0.6s ease forwards;
@@ -175,7 +181,7 @@ body {
 .draggable-tag.dragging {
     cursor: grabbing;
     transform: rotate(3deg) scale(1.1);
-    z-index: 1000;
+    z-index: 150;  /* 降低到合理的值，仍然在其他標籤之上，但不會覆蓋按鈕 */
     box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
     touch-action: none; /* 防止觸控滾動 */
 }
@@ -311,7 +317,7 @@ body {
     top: 0;
     left: 0;
     pointer-events: none;
-    z-index: 99;
+    z-index: 15;  /* 降低到標籤和按鈕之間的合理值 */
 }
 
 .rope-line {
@@ -348,7 +354,7 @@ body {
     bottom: 0;
     left: 50%;
     transform: translateX(-50%);
-    z-index: 20;
+    z-index: 22;  /* 介於按鈕(20)和提示區域(25)之間 */
     transition: transform 0.3s ease;
 }
 
@@ -464,8 +470,30 @@ body {
 }
 
 .start-btn:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.3);
+    background: #3cbab2;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(78, 205, 196, 0.3);
+}
+
+/* 清除資料按鈕樣式 */
+.clear-data-btn {
+    display: block;
+    margin: 15px auto 0;
+    padding: 10px 20px;
+    background: #ff6b6b;
+    color: white;
+    border: none;
+    border-radius: 25px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(255, 107, 107, 0.2);
+}
+
+.clear-data-btn:hover {
+    background: #ff5252;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 107, 107, 0.3);
 }
 
 .skip-text {
@@ -523,12 +551,39 @@ body {
     padding: 40px;
 }
 
+/* YouTube UI 遮罩層 - 用於遮蓋可能出現的 YouTube UI */
+.video-display::before,
+.video-display::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 402px;  /* 稍微寬一點以覆蓋邊緣 */
+    height: 40px;  /* 減少高度，只遮蓋 UI 區域 */
+    background: #000;
+    z-index: 5;
+    pointer-events: none;
+}
+
+.video-display::before {
+    top: 39px;  /* 精確對齊頂部 */
+    border-radius: 20px 20px 0 0;
+}
+
+.video-display::after {
+    bottom: 39px;  /* 精確對齊底部 */
+    border-radius: 0 0 20px 20px;
+}
+
 .video-display iframe {
     width: 400px;
     height: 712px; /* 9:16 比例 */
     border-radius: 20px;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
     transition: transform 0.3s ease, opacity 0.3s ease;
+    border: none;  /* 移除邊框 */
+    overflow: hidden;  /* 隱藏溢出內容 */
+    background: #000;  /* 黑色背景避免閃爍 */
 }
 
 .video-display video {
@@ -726,90 +781,89 @@ body {
     transform: scale(1.1);
 }
 
-/* 功能介紹區域 */
-.features-section {
+/* 簡化的提示區域 */
+.simple-hints {
     position: absolute;
-    bottom: 120px;
+    bottom: 30px;
     left: 50%;
     transform: translateX(-50%);
-    display: flex;
-    gap: 30px;
-    z-index: 11;
-    opacity: 0;
-    animation: fadeInUp 1s ease-out 0.5s forwards;
-}
-
-.feature-card {
-    background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 20px;
-    padding: 30px;
     text-align: center;
-    transition: all 0.3s ease;
-    cursor: default;
-    width: 200px;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 15px 30px;
+    border-radius: 30px;
+    backdrop-filter: blur(10px);
+    z-index: 25;  /* 提高 z-index，確保在標籤之上 */
 }
 
-.feature-card:hover {
-    transform: translateY(-5px);
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(78, 205, 196, 0.3);
-    box-shadow: 0 10px 30px rgba(78, 205, 196, 0.2);
-}
-
-.feature-icon {
-    font-size: 48px;
-    margin-bottom: 15px;
-    animation: float 3s ease-in-out infinite;
-}
-
-.feature-card:nth-child(2) .feature-icon {
-    animation-delay: 1s;
-}
-
-.feature-card:nth-child(3) .feature-icon {
-    animation-delay: 2s;
-}
-
-.feature-card h3 {
-    color: #4ecdc4;
-    margin: 0 0 10px 0;
-    font-size: 18px;
-}
-
-.feature-card p {
-    color: rgba(255, 255, 255, 0.7);
-    font-size: 14px;
-    line-height: 1.5;
-    margin: 0;
-}
-
-/* 快速提示 */
-.quick-tips {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    z-index: 11;
-}
-
-.tip {
+.simple-hints p {
     background: rgba(78, 205, 196, 0.1);
     backdrop-filter: blur(10px);
     border: 1px solid rgba(78, 205, 196, 0.3);
     border-radius: 30px;
-    padding: 10px 20px;
-    font-size: 14px;
-    color: rgba(255, 255, 255, 0.8);
-    opacity: 0;
-    animation: slideInRight 0.5s ease-out forwards;
+    padding: 15px 30px;
+    font-size: 16px;
+    color: rgba(255, 255, 255, 0.9);
+    margin: 0;
+    display: inline-block;
 }
 
-.tip:nth-child(2) {
-    animation-delay: 0.2s;
+/* 管理連結樣式 */
+.manage-links {
+    margin-top: 10px;
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+}
+
+.hint-link {
+    color: #4ecdc4;
+    text-decoration: none;
+    font-size: 14px;
+    padding: 5px 10px;
+    border: 1px solid rgba(78, 205, 196, 0.3);
+    border-radius: 15px;
+    transition: all 0.3s ease;
+}
+
+.hint-link:hover {
+    background: rgba(78, 205, 196, 0.1);
+    border-color: rgba(78, 205, 196, 0.5);
+    transform: translateY(-2px);
+}
+
+/* GSAP 增強樣式 */
+.draggable-tag {
+    will-change: transform;
+    transform-style: preserve-3d;
+}
+
+.draggable-tag.gsap-enhanced {
+    transition: none !important; /* GSAP 會處理所有動畫 */
+}
+
+/* 粒子效果 */
+.particle {
+    position: fixed;
+    pointer-events: none;
+    z-index: 1000;
+}
+
+/* 增強的載入動畫 */
+.loading-spinner.gsap-enhanced {
+    animation: none !important; /* 由 GSAP 控制 */
+}
+
+/* 頁面轉場遮罩 */
+.page-transition-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #000;
+    z-index: 9999;
+    pointer-events: none;
+    opacity: 0;
 }
 
 /* 動畫效果 */
@@ -846,19 +900,21 @@ body {
 
 /* 響應式設計 */
 @media (max-width: 768px) {
-    /* 首頁響應式 */
+    /* 首頁橫式佈局調整 */
     .homepage-content {
         flex-direction: column;
     }
     
     .left-section {
         max-width: 100%;
-        padding: 40px 30px 20px;
+        padding: 30px 20px;
         text-align: center;
+        z-index: 20;  /* 確保在手機版也保持正確的層級 */
     }
     
     .right-section {
-        padding: 20px 30px 40px;
+        padding: 20px;
+        z-index: 20;  /* 確保在手機版也保持正確的層級 */
     }
     
     .logo {
@@ -902,6 +958,21 @@ body {
     .video-display {
         order: 1;
         padding: 20px;
+    }
+    
+    /* 調整手機版的遮罩層 */
+    .video-display::before,
+    .video-display::after {
+        width: 90vw;
+        max-width: 402px;
+    }
+    
+    .video-display::before {
+        top: 19px;
+    }
+    
+    .video-display::after {
+        bottom: 19px;
     }
     
     .video-display iframe {
@@ -954,47 +1025,16 @@ body {
         font-size: 0.8rem;
     }
 
-    /* 功能介紹區域 */
-    .features-section {
+    /* 簡化提示響應式 */
+    .simple-hints {
         bottom: 100px;
-        flex-direction: column;
-        gap: 15px;
         width: 90%;
-        max-width: 300px;
+        max-width: 400px;
+        z-index: 25;  /* 確保在手機版也保持最高層級 */
     }
     
-    .feature-card {
-        width: 100%;
-        padding: 20px;
-        display: flex;
-        align-items: center;
-        text-align: left;
-        gap: 15px;
-    }
-    
-    .feature-icon {
-        font-size: 32px;
-        margin: 0;
-    }
-    
-    .feature-card h3 {
-        font-size: 16px;
-        margin-bottom: 5px;
-    }
-    
-    .feature-card p {
-        font-size: 12px;
-    }
-    
-    .quick-tips {
-        top: 10px;
-        right: 10px;
-        left: 10px;
-    }
-    
-    .tip {
-        font-size: 12px;
-        padding: 8px 15px;
-        text-align: center;
+    .simple-hints p {
+        font-size: 14px;
+        padding: 12px 20px;
     }
 } 

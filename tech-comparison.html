@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SITDown 技術方案比較</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f0f0f;
+            color: #fff;
+            padding: 40px 20px;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 40px;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .comparison-table {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            overflow: hidden;
+            margin-bottom: 40px;
+            backdrop-filter: blur(10px);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th, td {
+            padding: 20px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        th {
+            background: rgba(78, 205, 196, 0.2);
+            font-weight: 600;
+        }
+        
+        tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        .score {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        
+        .score-high {
+            background: rgba(76, 175, 80, 0.3);
+            color: #81c784;
+        }
+        
+        .score-medium {
+            background: rgba(255, 193, 7, 0.3);
+            color: #ffd54f;
+        }
+        
+        .score-low {
+            background: rgba(244, 67, 54, 0.3);
+            color: #ef5350;
+        }
+        
+        .recommendation {
+            background: rgba(78, 205, 196, 0.1);
+            border: 2px solid rgba(78, 205, 196, 0.5);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 40px;
+        }
+        
+        .recommendation h2 {
+            color: #4ecdc4;
+            margin-bottom: 20px;
+        }
+        
+        .pros-cons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+        
+        .pros, .cons {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 25px;
+            border-radius: 15px;
+        }
+        
+        .pros h3 {
+            color: #81c784;
+            margin-bottom: 15px;
+        }
+        
+        .cons h3 {
+            color: #ef5350;
+            margin-bottom: 15px;
+        }
+        
+        ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        
+        li {
+            padding: 8px 0;
+            padding-left: 25px;
+            position: relative;
+        }
+        
+        .pros li::before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #81c784;
+        }
+        
+        .cons li::before {
+            content: "✗";
+            position: absolute;
+            left: 0;
+            color: #ef5350;
+        }
+        
+        .code-example {
+            background: #1a1a1a;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            overflow-x: auto;
+        }
+        
+        pre {
+            color: #f8f8f2;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 14px;
+        }
+        
+        .demo-button {
+            display: inline-block;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            color: white;
+            padding: 12px 30px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            margin: 10px;
+        }
+        
+        .demo-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        @media (max-width: 768px) {
+            .pros-cons {
+                grid-template-columns: 1fr;
+            }
+            
+            table {
+                font-size: 0.9rem;
+            }
+            
+            th, td {
+                padding: 15px 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>SITDown 技術方案比較</h1>
+        
+        <div class="comparison-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>技術方案</th>
+                        <th>性能分數</th>
+                        <th>開發體驗</th>
+                        <th>學習曲線</th>
+                        <th>檔案大小</th>
+                        <th>適用場景</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Vanilla JS + CSS</strong><br><small>你現有的方案</small></td>
+                        <td><span class="score score-high">95/100</span></td>
+                        <td><span class="score score-medium">70/100</span></td>
+                        <td><span class="score score-high">簡單</span></td>
+                        <td><span class="score score-high">~20KB</span></td>
+                        <td>輕量級專案、高性能需求</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Vanilla JS + GSAP</strong><br><small>推薦方案</small></td>
+                        <td><span class="score score-high">93/100</span></td>
+                        <td><span class="score score-high">85/100</span></td>
+                        <td><span class="score score-medium">中等</span></td>
+                        <td><span class="score score-medium">~80KB</span></td>
+                        <td>複雜動畫、專業效果</td>
+                    </tr>
+                    <tr>
+                        <td><strong>React + Framer Motion</strong></td>
+                        <td><span class="score score-medium">85/100</span></td>
+                        <td><span class="score score-high">95/100</span></td>
+                        <td><span class="score score-low">困難</span></td>
+                        <td><span class="score score-low">~250KB</span></td>
+                        <td>大型應用、團隊開發</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Vue 3 + matter.js</strong></td>
+                        <td><span class="score score-medium">80/100</span></td>
+                        <td><span class="score score-high">90/100</span></td>
+                        <td><span class="score score-medium">中等</span></td>
+                        <td><span class="score score-low">~300KB</span></td>
+                        <td>物理模擬、遊戲化體驗</td>
+                    </tr>
+                    <tr>
+                        <td><strong>React + GSAP</strong></td>
+                        <td><span class="score score-high">88/100</span></td>
+                        <td><span class="score score-medium">80/100</span></td>
+                        <td><span class="score score-low">困難</span></td>
+                        <td><span class="score score-medium">~200KB</span></td>
+                        <td>專業動畫、企業級應用</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="recommendation">
+            <h2>🏆 最佳推薦：Vanilla JS + GSAP</h2>
+            <p>基於你的 SITDown 專案現狀，我推薦採用 <strong>Vanilla JS + GSAP</strong> 的漸進式增強方案。這個選擇能在保留現有程式碼基礎上，大幅提升動畫品質和開發效率。</p>
+        </div>
+        
+        <div class="pros-cons">
+            <div class="pros">
+                <h3>✅ 優點</h3>
+                <ul>
+                    <li>保留現有程式碼，無需重寫</li>
+                    <li>GSAP 是業界動畫標準，文檔完善</li>
+                    <li>性能優異，硬體加速</li>
+                    <li>漸進式整合，風險低</li>
+                    <li>動畫時間軸控制精準</li>
+                    <li>豐富的緩動函數庫</li>
+                </ul>
+            </div>
+            <div class="cons">
+                <h3>❌ 缺點</h3>
+                <ul>
+                    <li>增加約 60KB 檔案大小</li>
+                    <li>商業使用需要授權（但有免費版）</li>
+                    <li>需要學習 GSAP API</li>
+                    <li>沒有框架的組件化優勢</li>
+                </ul>
+            </div>
+        </div>
+        
+        <h2>實作範例：增強版貓爪動畫</h2>
+        <div class="code-example">
+            <pre>// 1. 在 index.html 中引入 GSAP
+&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"&gt;&lt;/script&gt;
+
+// 2. 增強現有的貓爪動畫
+const catPawTL = gsap.timeline({paused: true});
+
+catPawTL
+  .to('#cat-paw', {
+    y: -300,
+    rotation: -10,
+    duration: 0.8,
+    ease: 'power2.out'
+  })
+  .to('.claw', {
+    scale: 1.5,
+    rotation: (i) => [-20, 0, 20][i],
+    stagger: 0.05,
+    ease: 'back.out(1.5)'
+  }, 0.2)
+  .to('.homepage-content', {
+    filter: 'blur(5px)',
+    opacity: 0.7,
+    duration: 0.6
+  }, 0);
+
+// 3. 拖曳時更新進度
+function onDrag(progress) {
+  catPawTL.progress(progress);}</pre>
+        </div>
+        
+        <h2>其他方案適用情境</h2>
+        <div class="comparison-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>如果你需要...</th>
+                        <th>選擇這個方案</th>
+                        <th>原因</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>最小檔案大小</td>
+                        <td>保持 Vanilla JS</td>
+                        <td>零依賴，最輕量</td>
+                    </tr>
+                    <tr>
+                        <td>團隊協作開發</td>
+                        <td>React + Framer Motion</td>
+                        <td>組件化架構，易於維護</td>
+                    </tr>
+                    <tr>
+                        <td>物理效果（彈跳、碰撞）</td>
+                        <td>Vue 3 + matter.js</td>
+                        <td>真實物理引擎</td>
+                    </tr>
+                    <tr>
+                        <td>企業級動畫品質</td>
+                        <td>React + GSAP</td>
+                        <td>最專業的動畫解決方案</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <div style="text-align: center; margin-top: 40px;">
+            <a href="index.html" class="demo-button">查看現有版本</a>
+            <a href="enhanced-catpaw.js" class="demo-button">查看 GSAP 增強版程式碼</a>
+        </div>
+    </div>
+</body>
+</html> 

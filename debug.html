@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SITDown - 診斷頁面</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #333;
+            color: white;
+        }
+        .section {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+        }
+        .error {
+            color: #ff6b6b;
+        }
+        .success {
+            color: #4ecdc4;
+        }
+        .warning {
+            color: #ffd54f;
+        }
+        pre {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>SITDown 診斷頁面</h1>
+    
+    <div class="section">
+        <h2>1. 基本元素檢查</h2>
+        <div id="element-check"></div>
+    </div>
+    
+    <div class="section">
+        <h2>2. GSAP 載入狀態</h2>
+        <div id="gsap-check"></div>
+    </div>
+    
+    <div class="section">
+        <h2>3. 標籤狀態</h2>
+        <div id="tags-check"></div>
+    </div>
+    
+    <div class="section">
+        <h2>4. CSS 類別檢查</h2>
+        <div id="css-check"></div>
+    </div>
+    
+    <div class="section">
+        <h2>5. JavaScript 錯誤</h2>
+        <div id="error-log"></div>
+    </div>
+    
+    <div class="section">
+        <h2>6. 頁面顯示狀態</h2>
+        <div id="page-status"></div>
+    </div>
+    
+    <div class="section">
+        <h2>操作</h2>
+        <button onclick="window.location.href='index.html'">返回首頁</button>
+        <button onclick="resetAll()">重置所有設定</button>
+        <button onclick="testGSAP()">測試 GSAP</button>
+    </div>
+    
+    <script>
+        // 錯誤捕獲
+        window.onerror = function(msg, url, line) {
+            document.getElementById('error-log').innerHTML += 
+                `<p class="error">錯誤: ${msg} (${url}:${line})</p>`;
+            return false;
+        };
+        
+        // 檢查基本元素
+        function checkElements() {
+            const elements = [
+                'homepage',
+                'video-page',
+                'tags-playground',
+                'selection-basket',
+                'cat-paw',
+                'rope-container'
+            ];
+            
+            let html = '<ul>';
+            elements.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    html += `<li class="success">✓ #${id} 存在</li>`;
+                } else {
+                    html += `<li class="error">✗ #${id} 不存在</li>`;
+                }
+            });
+            html += '</ul>';
+            
+            document.getElementById('element-check').innerHTML = html;
+        }
+        
+        // 檢查 GSAP
+        function checkGSAP() {
+            let html = '';
+            if (typeof gsap !== 'undefined') {
+                html += '<p class="success">✓ GSAP 已載入</p>';
+                html += `<p>版本: ${gsap.version || '未知'}</p>`;
+            } else {
+                html += '<p class="error">✗ GSAP 未載入</p>';
+            }
+            
+            document.getElementById('gsap-check').innerHTML = html;
+        }
+        
+        // 檢查標籤
+        function checkTags() {
+            const tags = document.querySelectorAll('.draggable-tag');
+            let html = `<p>找到 ${tags.length} 個標籤</p>`;
+            
+            if (tags.length > 0) {
+                html += '<ul>';
+                tags.forEach((tag, index) => {
+                    const styles = window.getComputedStyle(tag);
+                    html += `<li>標籤 ${index + 1}: 
+                        opacity=${styles.opacity}, 
+                        display=${styles.display},
+                        visibility=${styles.visibility}
+                    </li>`;
+                });
+                html += '</ul>';
+            }
+            
+            document.getElementById('tags-check').innerHTML = html;
+        }
+        
+        // 檢查 CSS 類別
+        function checkCSS() {
+            const homepage = document.getElementById('homepage');
+            const videoPage = document.getElementById('video-page');
+            
+            let html = '<ul>';
+            if (homepage) {
+                html += `<li>首頁 classes: ${homepage.className || '無'}</li>`;
+                const styles = window.getComputedStyle(homepage);
+                html += `<li>首頁 display: ${styles.display}</li>`;
+                html += `<li>首頁 opacity: ${styles.opacity}</li>`;
+            }
+            if (videoPage) {
+                html += `<li>影片頁 classes: ${videoPage.className || '無'}</li>`;
+                const styles = window.getComputedStyle(videoPage);
+                html += `<li>影片頁 display: ${styles.display}</li>`;
+            }
+            html += '</ul>';
+            
+            document.getElementById('css-check').innerHTML = html;
+        }
+        
+        // 檢查頁面狀態
+        function checkPageStatus() {
+            let html = '<ul>';
+            
+            // 檢查 body 背景色
+            const bodyStyles = window.getComputedStyle(document.body);
+            html += `<li>Body 背景: ${bodyStyles.backgroundColor}</li>`;
+            html += `<li>Body 顏色: ${bodyStyles.color}</li>`;
+            
+            // 檢查是否有 active 頁面
+            const activePage = document.querySelector('.page.active');
+            if (activePage) {
+                html += `<li class="success">Active 頁面: ${activePage.id}</li>`;
+            } else {
+                html += `<li class="error">沒有 active 頁面</li>`;
+            }
+            
+            html += '</ul>';
+            document.getElementById('page-status').innerHTML = html;
+        }
+        
+        // 重置所有設定
+        function resetAll() {
+            // 移除 localStorage
+            localStorage.clear();
+            
+            // 強制顯示首頁
+            const homepage = document.getElementById('homepage');
+            const videoPage = document.getElementById('video-page');
+            
+            if (homepage) {
+                homepage.classList.add('active');
+                homepage.style.display = 'block';
+                homepage.style.opacity = '1';
+                homepage.style.transform = 'translateY(0)';
+            }
+            
+            if (videoPage) {
+                videoPage.classList.remove('active');
+                videoPage.style.display = 'none';
+            }
+            
+            alert('已重置！將重新載入頁面...');
+            window.location.reload();
+        }
+        
+        // 測試 GSAP
+        function testGSAP() {
+            if (typeof gsap !== 'undefined') {
+                const testDiv = document.createElement('div');
+                testDiv.style.cssText = 'position:fixed;top:50%;left:50%;width:100px;height:100px;background:#4ecdc4;transform:translate(-50%,-50%);';
+                document.body.appendChild(testDiv);
+                
+                gsap.to(testDiv, {
+                    rotation: 360,
+                    scale: 0,
+                    duration: 1,
+                    ease: "power2.inOut",
+                    onComplete: () => testDiv.remove()
+                });
+            } else {
+                alert('GSAP 未載入！');
+            }
+        }
+        
+        // 執行所有檢查
+        window.onload = function() {
+            checkElements();
+            checkGSAP();
+            checkTags();
+            checkCSS();
+            checkPageStatus();
+        };
+    </script>
+</body>
+</html> 

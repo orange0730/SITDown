@@ -26,6 +26,7 @@
                 <div class="start-section">
                     <button class="start-btn" onclick="startWatching()">開始觀看</button>
                     <p class="skip-text">或者直接開始隨機播放</p>
+                    <button class="clear-data-btn" id="clearDataBtn" onclick="clearImportedData()" style="display:none;">🗑️ 清除已匯入資料</button>
                 </div>
             </div>
             
@@ -42,29 +43,13 @@
             </div>
         </div>
         
-        <!-- 新增：功能介紹區域 -->
-        <div class="features-section">
-            <div class="feature-card">
-                <div class="feature-icon">🎯</div>
-                <h3>智能推薦</h3>
-                <p>根據您選擇的標籤，為您推薦相關影片</p>
+        <!-- 簡化的提示區域 -->
+        <div class="simple-hints">
+            <p>💡 拖曳標籤選擇類型，或直接開始隨機播放</p>
+            <div class="manage-links">
+                <a href="import-csv.html" class="hint-link">📥 匯入CSV</a>
+                <a href="manage-videos.html" class="hint-link">⚙️ 管理影片庫</a>
             </div>
-            <div class="feature-card">
-                <div class="feature-icon">🎲</div>
-                <h3>隨機探索</h3>
-                <p>不選擇標籤，直接開始隨機播放</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">🎨</div>
-                <h3>互動體驗</h3>
-                <p>拖曳標籤，感受有趣的物理碰撞效果</p>
-            </div>
-        </div>
-        
-        <!-- 新增：快速提示 -->
-        <div class="quick-tips">
-            <div class="tip">💡 提示：標籤會在碰到 SITDown 文字時反彈！</div>
-            <div class="tip">🐾 向上拉動貓爪也可以開始觀看</div>
         </div>
         
         <!-- 貓爪拉動區域 -->
@@ -136,6 +121,15 @@
         </div>
     </div>
 
+    <!-- 原有的主程式 -->
     <script src="script.js"></script>
+    
+    <!-- GSAP 動畫庫 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script> 
+    <script src="gsap-enhancements-safe.js"></script> 
+    <!-- <script src="gsap-enhancements.js"></script> 暫時停用，有衝突 --> 
+    
+    <!-- 診斷工具（開發時使用） -->
+    <script src="inline-debug.js"></script>
 </body>
 </html> 

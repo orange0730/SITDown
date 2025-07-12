@@ -1,5 +1,5 @@
 // Google Sheets 設定
-const SHEET_ID = '1ZGFadz4j-I8dX85Lfd0q3HBzlJfLXZsVnGCQBxLUHWI';
+const SHEET_ID = '1HHkBtepfUpc_QimDa6MK_KdHBswUbBGuWrWQzt15YDw';
 const API_KEY = 'AIzaSyBb92vwH86S9QJ6BlqK8hsNB3FQVCIzn-A'; // 請替換為您的 API 金鑰
 const SHEET_NAME = 'Sheet1';
 const RANGE = 'A2:C205'; // 從A2開始，避開標題行，到第205行
@@ -52,28 +52,37 @@ async function loadVideoLibrary() {
         console.log('開始載入影片庫...');
         
         // 構建 Google Sheets CSV 導出 URL
-        const csvUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0`;
+        const csvUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=317495087`;
         console.log('CSV URL:', csvUrl);
         
         // 添加 CORS 代理（如果直接訪問失敗）
         let response;
         try {
-            // 首先嘗試直接訪問
-            response = await fetch(csvUrl, {
-                method: 'GET',
-                mode: 'cors',
-                cache: 'no-cache',
-                credentials: 'omit',
-                redirect: 'follow'
-            });
-        } catch (directError) {
-            console.warn('直接訪問失敗，嘗試使用 CORS 代理...');
-            // 使用 CORS 代理服務
+            // 直接使用 CORS 代理來避免 CORS 問題
+            console.log('使用 CORS 代理訪問 Google Sheets...');
             const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(csvUrl)}`;
+            response = await fetch(proxyUrl);
+            
+            if (!response.ok) {
+                console.warn('CORS 代理失敗，嘗試直接訪問...');
+                // 備用方案：嘗試直接訪問
+                response = await fetch(csvUrl, {
+                    method: 'GET',
+                    mode: 'cors',
+                    cache: 'no-cache',
+                    credentials: 'omit',
+                    redirect: 'follow'
+                });
+            }
+        } catch (error) {
+            console.error('無法訪問 Google Sheets:', error);
+            // 嘗試另一個 CORS 代理
             try {
-                response = await fetch(proxyUrl);
-            } catch (proxyError) {
-                console.error('CORS 代理也失敗了');
+                console.log('嘗試備用 CORS 代理...');
+                const altProxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(csvUrl)}`;
+                response = await fetch(altProxyUrl);
+            } catch (altError) {
+                console.error('所有方法都失敗了');
                 throw new Error('無法訪問 Google Sheets，請確認：\n1. Google Sheets 已設為「公開」\n2. 網路連接正常');
             }
         }
@@ -149,8 +158,10 @@ async function loadVideoLibrary() {
                             id: videos.length + 1,
                             title: generateTitleFromCategory(tagList[0]),
                             url: embedUrl,
+                            originalUrl: link,  // 保存原始 URL
                             tags: tagList,
-                            type: 'youtube'
+                            type: 'youtube',
+                            isShorts: link.includes('/shorts/')  // 標記是否為 Shorts
                         };
                         
                         videos.push(video);
@@ -261,11 +272,12 @@ function convertToEmbedUrl(url) {
     try {
         console.log('轉換 URL:', url);
         
-        // 移除前後空白
+        // 移除前後空白和參數
         url = url.trim();
         
         // 處理不同的 YouTube URL 格式
         let videoId = '';
+        let isShorts = false;
         
         // 格式 1: https://youtu.be/VIDEO_ID
         if (url.includes('youtu.be/')) {
@@ -280,11 +292,16 @@ function convertToEmbedUrl(url) {
         // 格式 3: https://www.youtube.com/shorts/VIDEO_ID
         else if (url.includes('youtube.com/shorts/')) {
             const match = url.match(/shorts\/([a-zA-Z0-9_-]+)/);
-            if (match) videoId = match[1];
+            if (match) {
+                videoId = match[1];
+                isShorts = true;
+                console.log('偵測到 YouTube Shorts，video ID:', videoId);
+            }
         }
         // 格式 4: https://www.youtube.com/embed/VIDEO_ID (已經是 embed 格式)
         else if (url.includes('youtube.com/embed/')) {
-            return url; // 已經是正確格式
+            // 如果已經是 embed 格式，直接返回
+            return url;
         }
         // 格式 5: https://m.youtube.com/watch?v=VIDEO_ID (手機版)
         else if (url.includes('m.youtube.com/watch')) {
@@ -296,10 +313,20 @@ function convertToEmbedUrl(url) {
             const match = url.match(/embed\/([a-zA-Z0-9_-]+)/);
             if (match) videoId = match[1];
         }
+        // 格式 7: 手機版 Shorts
+        else if (url.includes('m.youtube.com/shorts/')) {
+            const match = url.match(/shorts\/([a-zA-Z0-9_-]+)/);
+            if (match) {
+                videoId = match[1];
+                isShorts = true;
+                console.log('偵測到手機版 YouTube Shorts，video ID:', videoId);
+            }
+        }
         
         if (videoId) {
+            // 統一轉換為 embed 格式
             const embedUrl = `https://www.youtube.com/embed/${videoId}`;
-            console.log('轉換成功:', embedUrl);
+            console.log(`轉換成功: ${isShorts ? 'Shorts' : '一般影片'} -> ${embedUrl}`);
             return embedUrl;
         } else {
             console.error('無法提取 video ID:', url);
@@ -1182,15 +1209,27 @@ function loadCurrentVideo() {
             const videoIdMatch = currentVideo.url.match(/embed\/([a-zA-Z0-9_-]+)/);
             const videoId = videoIdMatch ? videoIdMatch[1] : '';
             
+            // 設置所有可用的參數來隱藏 YouTube UI
             url.searchParams.set('autoplay', '1');
             url.searchParams.set('mute', '0');
             url.searchParams.set('loop', '1');
             url.searchParams.set('playlist', videoId); // 添加 playlist 參數以確保循環播放
             url.searchParams.set('controls', '0');  // 隱藏控制條
-            url.searchParams.set('modestbranding', '1');
-            url.searchParams.set('rel', '0');
+            url.searchParams.set('modestbranding', '1');  // 減少 YouTube 品牌標識
+            url.searchParams.set('rel', '0');  // 不顯示相關影片
             url.searchParams.set('showinfo', '0');  // 隱藏影片資訊
             url.searchParams.set('iv_load_policy', '3');  // 隱藏註解
+            url.searchParams.set('fs', '0');  // 隱藏全螢幕按鈕
+            url.searchParams.set('disablekb', '1');  // 停用鍵盤控制
+            url.searchParams.set('playsinline', '1');  // 在 iOS 上內嵌播放
+            url.searchParams.set('cc_load_policy', '0');  // 不自動顯示字幕
+            url.searchParams.set('origin', window.location.origin);  // 增加安全性
+            
+            // 檢查是否為 Shorts（透過原始 URL）
+            const originalUrl = filteredVideos[currentVideoIndex].originalUrl || '';
+            if (originalUrl.includes('/shorts/')) {
+                console.log('正在載入 YouTube Shorts');
+            }
             
             videoFrame.src = url.toString();
             console.log('設置影片 src:', videoFrame.src);
@@ -1547,6 +1586,9 @@ document.addEventListener('DOMContentLoaded', async function() {
     // 初始化控制按鈕狀態
     updateControlButtons();
     
+    // 檢查是否需要顯示清除按鈕
+    checkAndShowClearButton();
+    
     // 添加一些提示文字
     setTimeout(() => {
         const subtitle = document.querySelector('.subtitle');
@@ -1612,6 +1654,95 @@ window.reloadVideoLibrary = async function() {
     console.log('=== 重新載入完成 ===');
 };
 
+// 檢查影片庫中的 Shorts
+window.checkShortsInLibrary = function() {
+    console.log('=== 檢查影片庫中的 YouTube Shorts ===');
+    
+    let shortsCount = 0;
+    let regularCount = 0;
+    const shortsList = [];
+    
+    videoLibrary.forEach((video, index) => {
+        if (video.isShorts || (video.originalUrl && video.originalUrl.includes('/shorts/'))) {
+            shortsCount++;
+            shortsList.push({
+                index: index + 1,
+                title: video.title,
+                url: video.url,
+                originalUrl: video.originalUrl || '無原始 URL'
+            });
+        } else {
+            regularCount++;
+        }
+    });
+    
+    console.log(`總影片數: ${videoLibrary.length}`);
+    console.log(`Shorts 數量: ${shortsCount}`);
+    console.log(`一般影片數量: ${regularCount}`);
+    
+    if (shortsList.length > 0) {
+        console.log('\nShorts 列表:');
+        shortsList.forEach(shorts => {
+            console.log(`#${shorts.index}: ${shorts.title}`);
+            console.log(`  原始: ${shorts.originalUrl}`);
+            console.log(`  嵌入: ${shorts.url}`);
+        });
+    }
+    
+    return shortsList;
+};
+
+// 測試 YouTube Shorts 轉換
+window.testShortsConversion = function(url) {
+    console.log('=== 測試 YouTube Shorts URL 轉換 ===');
+    console.log('原始 URL:', url);
+    const embedUrl = convertToEmbedUrl(url);
+    console.log('轉換後 URL:', embedUrl);
+    
+    // 如果成功轉換，試著載入這個影片
+    if (embedUrl) {
+        const testVideo = {
+            id: 999,
+            title: "測試 Shorts",
+            url: embedUrl,
+            originalUrl: url,
+            tags: ["測試"],
+            type: "youtube",
+            isShorts: url.includes('/shorts/')
+        };
+        
+        // 設置為當前影片並載入
+        filteredVideos = [testVideo];
+        currentVideoIndex = 0;
+        
+        // 切換到影片頁面
+        showVideoPage();
+        loadCurrentVideo();
+        
+        console.log('已載入測試影片，請查看播放效果');
+    }
+    
+    return embedUrl;
+};
+
+// 批量測試 Shorts URL
+window.testMultipleShortsUrls = function() {
+    const testUrls = [
+        'https://www.youtube.com/shorts/ABC123',
+        'https://youtube.com/shorts/XYZ789',
+        'https://m.youtube.com/shorts/DEF456',
+        'https://www.youtube.com/watch?v=GHI789',
+        'https://youtu.be/JKL012'
+    ];
+    
+    console.log('=== 批量測試 URL 轉換 ===');
+    testUrls.forEach(url => {
+        console.log(`\n測試: ${url}`);
+        const result = convertToEmbedUrl(url);
+        console.log(`結果: ${result || '轉換失敗'}`);
+    });
+};
+
 // 測試 Google Sheets 連接
 window.testGoogleSheets = async function() {
     console.log('=== 測試 Google Sheets 連接 ===');
@@ -1646,3 +1777,46 @@ window.testGoogleSheets = async function() {
     
     console.log('=== 測試結束 ===');
 }; 
+
+// 檢查並顯示清除按鈕
+function checkAndShowClearButton() {
+    const clearBtn = document.getElementById('clearDataBtn');
+    if (!clearBtn) return;
+    
+    // 檢查localStorage是否有匯入的資料
+    const manualData = localStorage.getItem('sitdown_manual_videos');
+    
+    if (manualData) {
+        try {
+            const videos = JSON.parse(manualData);
+            if (videos && videos.length > 0) {
+                clearBtn.style.display = 'block';
+                console.log(`發現已匯入 ${videos.length} 個影片，顯示清除按鈕`);
+            }
+        } catch (e) {
+            console.error('解析匯入資料失敗:', e);
+        }
+    }
+}
+
+// 清除已匯入的資料
+function clearImportedData() {
+    // 顯示確認對話框
+    const confirmMsg = `確定要清除所有已匯入的影片資料嗎？\n\n這將會：\n• 刪除所有從CSV匯入的影片\n• 恢復使用預設的影片來源\n\n此操作無法復原！`;
+    
+    if (confirm(confirmMsg)) {
+        try {
+            // 清除localStorage中的資料
+            localStorage.removeItem('sitdown_manual_videos');
+            
+            // 顯示成功訊息
+            alert('✅ 已成功清除所有匯入的影片資料！\n\n頁面將重新載入...');
+            
+            // 重新載入頁面
+            window.location.reload();
+        } catch (error) {
+            console.error('清除資料失敗:', error);
+            alert('❌ 清除資料時發生錯誤，請稍後再試。');
+        }
+    }
+} 
